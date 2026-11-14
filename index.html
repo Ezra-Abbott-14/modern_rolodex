@@ -3,6 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="An AI-powered personal Rolodex for remembering the people you meet." />
     <title>Rolodexi</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
@@ -37,10 +38,7 @@
           </div>
 
           <div class="machine-top">
-            <span class="machine-brand">
-              ROLODEXI
-            </span>
-
+            <span class="machine-brand">ROLODEXI <i>personal edition</i></span>
             <label class="search">
               <span aria-hidden="true">⌕</span>
               <input id="search" type="search" placeholder="Find a person..." />
@@ -55,20 +53,35 @@
           </div>
 
           <div class="deck-controls">
-            <span class="control-prong" aria-hidden="true"></span>
+<<<<<<< HEAD
+            <button class="flip" id="prevBtn" type="button">← Previous</button>
+            <div class="deck-position" id="position" aria-live="polite"></div>
+            <button class="flip" id="nextBtn" type="button">Next →</button>
+=======
             <button class="flip" id="prevBtn">← Previous</button>
             <div class="deck-position" id="position" aria-live="polite"></div>
             <button class="flip" id="nextBtn">Next →</button>
-            <span class="control-prong" aria-hidden="true"></span>
           </div>
         </section>
       </section>
 
+      <p class="footer-note">A small place for the people worth remembering — where you met, what they care about, and the thread to pick up next time.</p>
     </main>
 
     <dialog id="personDialog">
       <form class="modal" id="personForm">
         <h2>Add a new card</h2>
+
+        <section class="memory-capture" aria-labelledby="memoryHeading">
+          <div class="eyebrow" id="memoryHeading">YESTERDAY’S ROLODEX. TODAY’S MEMORY.</div>
+          <label for="meetingNote">Tell us about someone you met</label>
+          <textarea id="meetingNote" maxlength="8000" placeholder="Type: Maya is an artist. We are going to a gallery together on 10/10…"></textarea>
+          <div class="capture-actions">
+            <button type="button" class="primary" id="generateBtn">Extract profile</button>
+          </div>
+          <p id="captureStatus" role="status" aria-live="polite">Type a memory, extract the details, then review and save below.</p>
+          <p id="serviceHelp" hidden><a href="http://localhost:8000/" target="_blank" rel="noopener">Open the full Rolodexi app on port 8000 ↗</a><br>Copy your note first. This opens a new tab.</p>
+        </section>
 
         <div class="form-grid">
           <label>
@@ -107,6 +120,30 @@
           </label>
 
           <label class="field full">
+            Appearance
+            <textarea name="appearance" placeholder="Only the description you remember"></textarea>
+          </label>
+
+          <label>
+            Gender (if stated)
+            <select name="gender">
+              <option value="">Not specified</option>
+              <option value="female">Female</option>
+              <option value="male">Male</option>
+            </select>
+          </label>
+
+          <label>
+            Pronouns (if stated)
+            <input name="pronouns" />
+          </label>
+
+          <label class="field full">
+            Memorable events (one per line)
+            <textarea name="events"></textarea>
+          </label>
+
+          <label class="field full">
             Tags
             <input name="tags" placeholder="design, coffee, local (comma separated)" />
           </label>
@@ -114,11 +151,37 @@
 
         <div class="modal-actions">
           <button type="button" class="ghost" id="cancelBtn">Cancel</button>
-          <button class="primary">Save card</button>
+          <button class="primary" type="submit">Save card</button>
         </div>
       </form>
     </dialog>
 
+<<<<<<< HEAD
+    <dialog id="updateDialog">
+      <form class="modal" id="updateForm">
+        <h2>Update a card</h2>
+        <p class="modal-help">Choose a person by exact name, then select only the information you want to change.</p>
+        <label class="field full">Name key<select id="updateName" name="key" required></select></label>
+        <div class="update-fields">
+          <label class="update-field"><span><input type="checkbox" data-field="role" /> Role / company</span><input name="role" data-update-value="role" placeholder="Designer at..." disabled /></label>
+          <label class="update-field"><span><input type="checkbox" data-field="met" /> Where you met</span><input name="met" data-update-value="met" placeholder="Saturday market" disabled /></label>
+          <label class="update-field"><span><input type="checkbox" data-field="city" /> City</span><input name="city" data-update-value="city" placeholder="Portland, OR" disabled /></label>
+          <label class="update-field"><span><input type="checkbox" data-field="phone" /> Phone</span><input name="phone" data-update-value="phone" placeholder="(555) 123-4567" disabled /></label>
+          <label class="update-field"><span><input type="checkbox" data-field="email" /> Email</span><input name="email" data-update-value="email" placeholder="hello@example.com" disabled /></label>
+          <label class="update-field full"><span><input type="checkbox" data-field="notes" /> Memory / notes</span><textarea name="notes" data-update-value="notes" rows="3" placeholder="What should you remember?" disabled></textarea></label>
+          <label class="update-field full"><span><input type="checkbox" data-field="tags" /> Tags</span><input name="tags" data-update-value="tags" placeholder="design, coffee, local" disabled /></label>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="ghost" id="cancelUpdateBtn">Cancel</button>
+          <button class="primary" type="submit">Save updates</button>
+        </div>
+      </form>
+    </dialog>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
     <script src="app.js"></script>
+=======
+    <script type="module" src="app.js"></script>
+>>>>>>> 1b7b261419e23858ba766a3c04f390ed6a056d83
   </body>
 </html>

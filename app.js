@@ -1,4 +1,10 @@
+<<<<<<< HEAD
 // Starter data keeps the deck useful on first launch.
+=======
+import { initStreetValleyWorld } from './street_valley_world.js';
+import { extractProfile } from './profile-api.mjs';
+
+>>>>>>> jonathan_street_valley
 const seed = [
   {
     id: 1,
@@ -125,16 +131,55 @@ let activeLetter = 'ALL';
 let deckIndex = 0;
 let visiblePeople = sortByLastName(people);
 let dragStart = null;
+let wheelDelta = 0;
+let wheelLocked = false;
 
 const $ = selector => document.querySelector(selector);
 
 // ---------- Storage and data helpers ----------
 function loadPeople() {
-  return JSON.parse(localStorage.getItem('retro-rolodex') || 'null') || seed;
+  try {
+    const saved = JSON.parse(localStorage.getItem('retro-rolodex') || 'null');
+    if (Array.isArray(saved) && saved.every(person => person && typeof person.name === 'string' && person.name.trim() && Array.isArray(person.tags))) return saved;
+  } catch { /* Recover gracefully from unavailable or corrupted storage. */ }
+  return structuredClone(seed);
 }
 
 function savePeople() {
   localStorage.setItem('retro-rolodex', JSON.stringify(people));
+<<<<<<< HEAD
+=======
+}
+
+function normalizeName(value) {
+  return String(value || '').toLowerCase().replace(/[^a-z0-9 ]/g, '').replace(/\s+/g, ' ').trim();
+}
+
+function samePerson(first, second) {
+  const firstKey = normalizeName(first);
+  return firstKey !== '' && firstKey === normalizeName(second);
+}
+
+function mergeUnique(first, second) {
+  return [...new Set([...(first || []), ...(second || [])].map(value => String(value).trim()).filter(Boolean))];
+}
+
+function mergePerson(existing, incoming) {
+  for (const field of ['role', 'met', 'city', 'phone', 'email', 'appearance', 'gender', 'pronouns']) {
+    if (incoming[field] && incoming[field] !== '—' && incoming[field] !== 'New connection' && incoming[field] !== 'Somewhere interesting') {
+      existing[field] = incoming[field];
+    }
+  }
+  if (incoming.notes && incoming.notes !== 'Add a note next time you see them.') {
+    const oldNotes = String(existing.notes || '');
+    if (!oldNotes.toLowerCase().includes(incoming.notes.toLowerCase())) {
+      existing.notes = oldNotes ? `${oldNotes}\n• ${incoming.notes}` : incoming.notes;
+    }
+  }
+  existing.events = mergeUnique(existing.events, incoming.events);
+  existing.tags = mergeUnique(existing.tags, incoming.tags);
+  return existing;
+>>>>>>> jonathan_street_valley
 }
 
 function escapeHtml(value) {
@@ -171,6 +216,10 @@ function getFilteredPeople() {
       person.met,
       person.city,
       person.notes,
+      person.appearance,
+      person.gender,
+      person.pronouns,
+      ...(person.events || []),
       ...person.tags
     ].join(' ').toLowerCase();
 
@@ -216,7 +265,7 @@ function renderCard(person, position) {
 
   return `
     <article class="contact-card ${stackClass}">
-      <div class="card-tab">${firstLetter}</div>
+      <div class="card-tab">${escapeHtml(firstLetter)}</div>
 
       <div class="card-header">
         <div class="avatar ${getToneClass(person)}">${escapeHtml(person.avatar)}</div>
@@ -253,7 +302,13 @@ function renderCard(person, position) {
       </div>
 
       <div class="tags">${tags}</div>
-      <div class="card-number">CARD ${String(person.id).padStart(2, '0')} · LAST NAME: ${lastName}</div>
+      <div class="memory-details">
+        ${person.appearance ? `<p><span class="label">Appearance</span><br>${escapeHtml(person.appearance)}</p>` : ''}
+        ${person.gender ? `<p><span class="label">Gender</span><br>${escapeHtml(person.gender)}</p>` : ''}
+        ${person.pronouns ? `<p><span class="label">Pronouns</span><br>${escapeHtml(person.pronouns)}</p>` : ''}
+        ${person.events?.length ? `<p><span class="label">Memorable events</span><br>${person.events.map(escapeHtml).join('<br>')}</p>` : ''}
+      </div>
+      <div class="card-number">CARD ${escapeHtml(String(person.id))} · LAST NAME: ${escapeHtml(lastName)}</div>
     </article>`;
 }
 
@@ -274,10 +329,18 @@ function renderDeck() {
     .map((person, index) => renderCard(person, index))
     .join('');
 
+<<<<<<< HEAD
   const totalLabel = visiblePeople.length === 1 ? 'card' : 'cards';
 
   $('#count').textContent = `${visiblePeople.length} ${totalLabel}`;
   $('#position').textContent = `${deckIndex + 1} / ${visiblePeople.length}`;
+=======
+  const currentPerson = visiblePeople[deckIndex];
+  const totalLabel = visiblePeople.length === 1 ? 'card' : 'cards';
+
+  $('#count').textContent = `${visiblePeople.length} ${totalLabel}`;
+  $('#position').textContent = `${deckIndex + 1} / ${visiblePeople.length} · ${getLastName(currentPerson).toUpperCase()}`;
+>>>>>>> jonathan_street_valley
 
   const isFirstCard = deckIndex === 0;
   const isLastCard = deckIndex === visiblePeople.length - 1;
@@ -320,6 +383,10 @@ function buildPerson(form) {
     phone: form.get('phone') || '—',
     email: form.get('email') || '—',
     notes: form.get('notes') || 'Add a note next time you see them.',
+    appearance: form.get('appearance') || '',
+    gender: form.get('gender') || '',
+    pronouns: form.get('pronouns') || '',
+    events: (form.get('events') || '').split('\n').map(value => value.trim()).filter(Boolean),
     tags,
     avatar: name.split(' ').map(part => part[0]).join('').slice(0, 2).toUpperCase(),
     tone: ['teal', 'rust', 'gold'][people.length % 3]
@@ -338,7 +405,10 @@ function exportPeople() {
   URL.revokeObjectURL(link.href);
 }
 
+<<<<<<< HEAD
 // ---------- Event wiring ----------
+=======
+>>>>>>> jonathan_street_valley
 $('#prevBtn').onclick = () => moveDeck(-1);
 $('#nextBtn').onclick = () => moveDeck(1);
 
@@ -353,6 +423,7 @@ $('#deckWindow').addEventListener('wheel', event => {
 }, { passive: false });
 
 document.addEventListener('keydown', event => {
+  if ($('#personDialog').open || /INPUT|TEXTAREA/.test(event.target.tagName)) return;
   if (event.key === 'ArrowRight') moveDeck(1);
   if (event.key === 'ArrowLeft') moveDeck(-1);
 });
@@ -371,24 +442,156 @@ $('#deckWindow').addEventListener('pointerup', event => {
 
 $('#addBtn').onclick = () => {
   $('#personForm').reset();
+  setCaptureStatus('Type a note, extract the details, then review and save below.');
   $('#personDialog').showModal();
 };
 
 $('#cancelBtn').onclick = () => $('#personDialog').close();
+$('#personDialog').addEventListener('cancel', event => {
+  if (extracting) event.preventDefault();
+});
 
 $('#personForm').onsubmit = event => {
   event.preventDefault();
 
+  if (extracting) return;
   const person = buildPerson(new FormData(event.target));
-  people.push(person);
+  if (!person.name) return setCaptureStatus('Please enter the person’s name.', true);
+  const previousPeople = [...people];
+  const existing = people.find(item => samePerson(item.name, person.name));
+  const savedPerson = existing ? mergePerson(existing, person) : person;
+  if (!existing) people.push(person);
+  try {
+    savePeople();
+  } catch {
+    people = previousPeople;
+    setCaptureStatus('Your browser could not save this card. Export existing cards or free browser storage, then retry.', true);
+    return;
+  }
   activeLetter = 'ALL';
-  deckIndex = sortByLastName(people).findIndex(item => item.id === person.id);
+  $('#search').value = '';
+  deckIndex = sortByLastName(people).findIndex(item => item.id === savedPerson.id);
 
-  savePeople();
   $('#personDialog').close();
   render();
+<<<<<<< HEAD
+=======
+  setCaptureStatus(existing ? `${existing.name} updated — new information was added to the same card.` : `${person.name} added.`);
+>>>>>>> jonathan_street_valley
 };
 
 $('#exportBtn').onclick = exportPeople;
 
+<<<<<<< HEAD
+=======
+let extracting = false;
+
+function setCaptureStatus(message, error = false) {
+  $('#serviceHelp').hidden = true;
+  $('#captureStatus').textContent = message;
+  $('#captureStatus').classList.toggle('error', error);
+}
+
+$('#generateBtn').onclick = async () => {
+  if (extracting) return;
+  const note = $('#meetingNote').value.trim();
+  if (!note) return setCaptureStatus('Type a note before extracting a profile.', true);
+  extracting = true;
+  $('#cancelBtn').disabled = true;
+  $('#generateBtn').disabled = true;
+  $('#meetingNote').readOnly = true;
+  $('#personForm .modal-actions button:last-child').disabled = true;
+  $('#generateBtn').textContent = 'Extracting…';
+  setCaptureStatus('Finding the details in your memory…');
+  try {
+    const profile = await extractProfile(note);
+    for (const name of ['name', 'role', 'met', 'city', 'phone', 'email', 'notes', 'gender', 'pronouns', 'appearance']) {
+      $('#personForm').elements.namedItem(name).value = profile[name] || '';
+    }
+    $('#personForm').elements.namedItem('events').value = (profile.events || []).join('\n');
+    $('#personForm').elements.namedItem('tags').value = (profile.tags || []).join(', ');
+    setCaptureStatus('Details extracted with Gemini. Review them below, then save your card.');
+  } catch (error) {
+    setCaptureStatus(error.message, true);
+    $('#serviceHelp').hidden = !['WRONG_SERVER', 'BACKEND_UNREACHABLE'].includes(error.code);
+  } finally {
+    extracting = false;
+    $('#cancelBtn').disabled = false;
+    $('#generateBtn').disabled = false;
+    $('#meetingNote').readOnly = false;
+    $('#personForm .modal-actions button:last-child').disabled = false;
+    $('#generateBtn').textContent = 'Extract profile';
+  }
+};
+
+function populateUpdateNames() {
+  const select = $('#updateName');
+  select.replaceChildren();
+  sortByLastName(people).forEach(person => {
+    const option = document.createElement('option');
+    option.value = person.name;
+    option.textContent = person.name;
+    select.append(option);
+  });
+  loadUpdateFields();
+}
+
+function loadUpdateFields() {
+  const person = people.find(item => samePerson(item.name, $('#updateName').value));
+  if (!person) return;
+  document.querySelectorAll('[data-update-value]').forEach(input => {
+    const field = input.dataset.updateValue;
+    input.value = field === 'tags'
+      ? (person.tags || []).join(', ')
+      : field === 'events'
+        ? (person.events || []).join('\n')
+        : person[field] || '';
+    input.disabled = true;
+    const checkbox = document.querySelector(`[data-field="${field}"]`);
+    if (checkbox) checkbox.checked = false;
+  });
+}
+
+$('#updateBtn').onclick = () => {
+  if (!people.length) return;
+  populateUpdateNames();
+  $('#updateDialog').showModal();
+};
+
+$('#cancelUpdateBtn').onclick = () => $('#updateDialog').close();
+$('#updateName').onchange = loadUpdateFields;
+document.querySelectorAll('[data-field]').forEach(checkbox => {
+  checkbox.onchange = () => {
+    const input = document.querySelector(`[data-update-value="${checkbox.dataset.field}"]`);
+    if (input) input.disabled = !checkbox.checked;
+  };
+});
+
+$('#updateForm').onsubmit = event => {
+  event.preventDefault();
+  const person = people.find(item => samePerson(item.name, $('#updateName').value));
+  const selected = [...event.target.querySelectorAll('[data-field]:checked')];
+  if (!person) return;
+  if (!selected.length) return window.alert('Select at least one field to update.');
+  selected.forEach(checkbox => {
+    const field = checkbox.dataset.field;
+    const input = event.target.querySelector(`[data-update-value="${field}"]`);
+    if (field === 'tags') person.tags = input.value.split(',').map(value => value.trim()).filter(Boolean);
+    else if (field === 'events') person.events = input.value.split('\n').map(value => value.trim()).filter(Boolean);
+    else person[field] = input.value.trim();
+  });
+  savePeople();
+  $('#updateDialog').close();
+  activeLetter = 'ALL';
+  $('#search').value = '';
+  deckIndex = sortByLastName(people).findIndex(item => item.id === person.id);
+  render();
+};
+
+>>>>>>> jonathan_street_valley
 render();
+
+initStreetValleyWorld({
+  canvas: document.querySelector('#streetValleyCanvas'),
+  getContacts: () => people
+});
