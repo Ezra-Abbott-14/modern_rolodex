@@ -191,11 +191,6 @@ function getGenderClass(person) {
   return 'human';
 }
 
-function getGenderLabel(person) {
-  const gender = getGenderClass(person);
-  return gender === 'male' ? 'MALE HUMAN' : gender === 'female' ? 'FEMALE HUMAN' : 'HUMAN / NOT SET';
-}
-
 function trimSentence(value) {
   return String(value || '').trim().replace(/[.!?]+$/, '');
 }
@@ -374,7 +369,6 @@ function renderCard(person, position) {
           <div class="street-valley-portrait ${getGenderClass(person)}" aria-hidden="true">
             <span class="pixel-hair"></span><span class="pixel-face"></span><span class="pixel-eye left"></span><span class="pixel-eye right"></span><span class="pixel-body"></span><span class="pixel-shirt"></span>
           </div>
-          <div><div class="street-valley-kicker">STREET VALLEY · HUMAN TAKE</div><div class="street-valley-gender">${getGenderLabel(person)}</div></div>
         </div>
         <div class="street-valley-copy">${escapeHtml(getStreetValleyLine(person))}</div>
       </div>
