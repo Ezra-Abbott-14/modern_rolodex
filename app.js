@@ -1,24 +1,4 @@
-<<<<<<< HEAD
-const transcript = document.querySelector('#transcript');
-const generateButton = document.querySelector('#generateButton');
-const profileGrid = document.querySelector('#profileGrid');
-const profileCount = document.querySelector('#profileCount');
-const captureHint = document.querySelector('#captureHint');
-const toast = document.querySelector('#toast');
-const searchInput = document.querySelector('#searchInput');
-const manualPanel = document.querySelector('#manualPanel');
-const manualForm = document.querySelector('#manualForm');
-const closeManualButton = document.querySelector('#closeManualButton');
-const manualTrigger = document.querySelector('#manualTrigger');
-
-const STORAGE_KEY = 'folio-contacts-v1';
-let sortMode = 'all';
-
-const seedContacts = [
-  { name: 'Maya Chen', where: 'Met at the Saturday market', facts: ['Artist', 'First gallery show is in October.'], tag: 'CREATIVE SPARK', color: 'coral', meta: 'She / her' },
-  { name: 'Jon Bell', where: 'Introduced by Nora at Bloom', facts: ['Training for his first half marathon.'], tag: 'GOOD ENERGY', color: 'blue', meta: 'He / him' },
-  { name: 'Amara Lewis', where: 'On the train to Portland', facts: ['Knows the best tiny bookstores.'], tag: 'THE CONNECTOR', color: 'yellow', meta: 'She / her' },
-=======
+// Starter data keeps the deck useful on first launch.
 const seed = [
   {
     id: 1,
@@ -137,28 +117,33 @@ const seed = [
     avatar: 'EJ',
     tone: 'gold'
   }
->>>>>>> d224744b696f5e66fac191d4e9d8d09289b1642a
 ];
 
+// Application state.
 let people = loadPeople();
 let activeLetter = 'ALL';
 let deckIndex = 0;
-let visiblePeople = [];
+let visiblePeople = sortByLastName(people);
 let dragStart = null;
 
 const $ = selector => document.querySelector(selector);
 
+// ---------- Storage and data helpers ----------
 function loadPeople() {
   return JSON.parse(localStorage.getItem('retro-rolodex') || 'null') || seed;
 }
 
 function savePeople() {
-  localStorage.setItem(PEOPLE_KEY, JSON.stringify(people));
+  localStorage.setItem('retro-rolodex', JSON.stringify(people));
 }
 
 function escapeHtml(value) {
-  return String(value || '').replace(/[&<>"']/g, (character) => ({
-    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
+  return String(value || '').replace(/[&<>"']/g, character => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;'
   })[character]);
 }
 
@@ -193,20 +178,36 @@ function getFilteredPeople() {
   });
 }
 
+// ---------- Rendering ----------
 function renderIndex() {
   const letters = ['ALL', ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'];
-  $('#index').innerHTML = letters.map((letter) => `<button class="tab ${letter === activeLetter ? 'active' : ''}" data-letter="${letter}">${letter === 'ALL' ? '★ All cards' : letter}</button>`).join('');
-  document.querySelectorAll('[data-letter]').forEach((button) => {
-    button.onclick = () => { activeLetter = button.dataset.letter; deckIndex = 0; render(); };
+
+  $('#index').innerHTML = letters.map(letter => {
+    const label = letter === 'ALL' ? '★ All cards' : letter;
+    const activeClass = letter === activeLetter ? 'active' : '';
+
+    return `<button class="tab ${activeClass}" data-letter="${letter}">${label}</button>`;
+  }).join('');
+
+  document.querySelectorAll('[data-letter]').forEach(button => {
+    button.onclick = () => {
+      activeLetter = button.dataset.letter;
+      deckIndex = 0;
+      render();
+    };
   });
 }
 
 function getToneClass(person) {
-  return person.tone === 'rust' ? 'rust' : person.tone === 'gold' ? 'gold' : '';
+  if (person.tone === 'rust') return 'rust';
+  if (person.tone === 'gold') return 'gold';
+  return '';
 }
 
 function renderCard(person, position) {
-  const stackClass = position === 0 ? 'front' : `behind-${Math.min(position, 3)}`;
+  const stackClass = position === 0
+    ? 'front'
+    : `behind-${Math.min(position, 3)}`;
   const lastName = getLastName(person).toUpperCase();
   const firstLetter = lastName[0];
   const tags = person.tags
@@ -258,106 +259,51 @@ function renderCard(person, position) {
 
 function renderDeck() {
   visiblePeople = getFilteredPeople();
+
   if (!visiblePeople.length) {
     $('#cardStack').innerHTML = '<div class="empty-card">No cards match this stack.<br />Try a different letter or add someone new.</div>';
     $('#count').textContent = '0 cards';
     $('#position').textContent = '';
-    $('#prevBtn').disabled = true;
-    $('#nextBtn').disabled = true;
     return;
   }
+
   deckIndex = Math.max(0, Math.min(deckIndex, visiblePeople.length - 1));
-  $('#cardStack').innerHTML = visiblePeople.slice(deckIndex, deckIndex + 4).map(renderCard).join('');
-  const currentPerson = visiblePeople[deckIndex];
-  $('#count').textContent = `${visiblePeople.length} ${visiblePeople.length === 1 ? 'card' : 'cards'}`;
-  $('#position').textContent = `${deckIndex + 1} / ${visiblePeople.length} · ${getLastName(currentPerson).toUpperCase()}`;
-  const first = deckIndex === 0;
-  const last = deckIndex === visiblePeople.length - 1;
-  $('#prevBtn').disabled = first;
-  $('#nextBtn').disabled = last;
-  $('#prevBtn').style.opacity = first ? '.45' : '1';
-  $('#nextBtn').style.opacity = last ? '.45' : '1';
+  const cardsToShow = visiblePeople.slice(deckIndex, deckIndex + 4);
+
+  $('#cardStack').innerHTML = cardsToShow
+    .map((person, index) => renderCard(person, index))
+    .join('');
+
+  const totalLabel = visiblePeople.length === 1 ? 'card' : 'cards';
+
+  $('#count').textContent = `${visiblePeople.length} ${totalLabel}`;
+  $('#position').textContent = `${deckIndex + 1} / ${visiblePeople.length}`;
+
+  const isFirstCard = deckIndex === 0;
+  const isLastCard = deckIndex === visiblePeople.length - 1;
+
+  $('#prevBtn').disabled = isFirstCard;
+  $('#nextBtn').disabled = isLastCard;
+  $('#prevBtn').style.opacity = isFirstCard ? '.45' : '1';
+  $('#nextBtn').style.opacity = isLastCard ? '.45' : '1';
 }
 
-function render() { renderIndex(); renderDeck(); }
-function moveDeck(amount) {
-  if (!visiblePeople.length) return;
-  deckIndex = Math.max(0, Math.min(deckIndex + amount, visiblePeople.length - 1));
+function render() {
+  renderIndex();
   renderDeck();
 }
 
-function extractName(text) {
-  const afterIntro = text.match(/(?:about|met|named)\s+(.+)/i)?.[1] || text;
-  const words = afterIntro.match(/[A-Za-z]+/g) || [];
-  const stopWords = new Set(['at', 'on', 'in', 'through', 'during', 'is', 'was', 'go', 'goes', 'went', 'works', 'lives', 'said', 'has', 'and']);
-  if (!words[0]) return 'New connection';
-  return words[1] && !stopWords.has(words[1].toLowerCase()) ? `${words[0]} ${words[1]}` : words[0];
+function moveDeck(amount) {
+  if (!visiblePeople.length) return;
+
+  deckIndex = Math.max(0, Math.min(
+    deckIndex + amount,
+    visiblePeople.length - 1
+  ));
+  renderDeck();
 }
 
-function parseNote(text) {
-  const name = extractName(text);
-  const remainder = text.replace(new RegExp(`^${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*[:,;-]?\\s*`, 'i'), '').trim();
-  return { name, notes: remainder || text };
-}
-
-function samePerson(first, second) {
-  return normalizeName(first) === normalizeName(second) && normalizeName(first) !== '';
-}
-
-function notesFromAI(contact) {
-  const facts = Array.isArray(contact.facts) ? contact.facts.filter(Boolean) : [];
-  return [clean(contact.summary), ...facts.map((fact) => `• ${clean(fact)}`)].filter(Boolean).join('\n');
-}
-
-function updateOrAddLocally(fallback) {
-  const index = people.findIndex((person) => samePerson(person.name, fallback.name));
-  if (index >= 0) {
-    const existing = people[index];
-    const incoming = clean(fallback.notes);
-    if (incoming && !existing.notes.toLowerCase().includes(incoming.toLowerCase())) existing.notes = `${existing.notes}\n• ${incoming}`;
-    savePeople();
-    render();
-    showToast(`${existing.name} updated locally.`);
-    return;
-  }
-  const person = normalizePerson({ ...fallback, id: newId(), role: 'New connection', met: 'Somewhere interesting', city: '—', tags: ['new'] }, people.length);
-  people.unshift(person);
-  savePeople();
-  render();
-  showToast(`${person.name} added locally.`);
-}
-
-async function saveWithAI(note, fallback) {
-  const response = await fetch('/api/merge', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contacts: people.map((person) => ({ id: person.id, name: person.name, role: person.role, where: person.met, city: person.city, notes: person.notes, tags: person.tags })),
-      captured_name: fallback.name,
-      new_note: note,
-    }),
-  });
-  if (!response.ok) throw new Error(`AI merge failed with status ${response.status}`);
-  const result = await response.json();
-  const contact = result.contact || {};
-  const matchedIndex = people.findIndex((person) => String(person.id) === String(result.matched_contact_id));
-  if (matchedIndex >= 0) {
-    const existing = people[matchedIndex];
-    if (!samePerson(existing.name, fallback.name)) throw new Error('AI returned a non-exact contact match.');
-    existing.notes = notesFromAI(contact) || existing.notes;
-    existing.met = clean(contact.where) || existing.met;
-    savePeople();
-    render();
-    showToast(`${existing.name} updated by AI.`);
-    return;
-  }
-  const newPerson = normalizePerson({ id: newId(), name: contact.name || fallback.name, role: 'New connection', met: contact.where, notes: notesFromAI(contact) || fallback.notes, tags: ['new'] }, people.length);
-  people.unshift(newPerson);
-  savePeople();
-  render();
-  showToast(`${newPerson.name} added by AI.`);
-}
-
+// ---------- Contact creation and export ----------
 function buildPerson(form) {
   const name = form.get('name').trim();
   const tags = (form.get('tags') || 'new')
@@ -381,49 +327,18 @@ function buildPerson(form) {
 }
 
 function exportPeople() {
-  const blob = new Blob([JSON.stringify(sortByLastName(people), null, 2)], { type: 'application/json' });
+  const blob = new Blob([
+    JSON.stringify(sortByLastName(people), null, 2)
+  ], { type: 'application/json' });
   const link = document.createElement('a');
+
   link.href = URL.createObjectURL(blob);
   link.download = 'my-rolodex.json';
   link.click();
   URL.revokeObjectURL(link.href);
 }
 
-function populateUpdateNames() {
-  const select = $('#updateName');
-  select.replaceChildren();
-  sortByLastName(people).forEach((person) => {
-    const option = document.createElement('option');
-    option.value = person.name;
-    option.textContent = person.name;
-    select.append(option);
-  });
-  loadUpdateFields();
-}
-
-function loadUpdateFields() {
-  const person = people.find((item) => samePerson(item.name, $('#updateName').value));
-  if (!person) return;
-  document.querySelectorAll('[data-update-value]').forEach((input) => {
-    const field = input.dataset.updateValue;
-    input.value = field === 'tags' ? person.tags.join(', ') : person[field] || '';
-    input.disabled = true;
-    const checkbox = document.querySelector(`[data-field="${field}"]`);
-    if (checkbox) checkbox.checked = false;
-  });
-}
-
-generateButton.onclick = async () => {
-  const note = transcript.value.trim();
-  if (!note) return showToast('Write a note first.');
-  const fallback = parseNote(note);
-  generateButton.disabled = true;
-  captureHint.textContent = 'AI is checking the exact person name and organizing the memory…';
-  try { await saveWithAI(note, fallback); }
-  catch (error) { updateOrAddLocally(fallback); console.warn(error); }
-  finally { generateButton.disabled = false; captureHint.textContent = 'Same name merges into one card; Maya and Maya Chen stay separate.'; transcript.value = ''; }
-};
-
+// ---------- Event wiring ----------
 $('#prevBtn').onclick = () => moveDeck(-1);
 $('#nextBtn').onclick = () => moveDeck(1);
 
@@ -432,69 +347,14 @@ $('#search').oninput = () => {
   renderDeck();
 };
 
-<<<<<<< HEAD
-const extract = (text, patterns, fallback) => {
-  for (const pattern of patterns) { const match = text.match(pattern); if (match) return clean(match[1]); }
-  return fallback;
-};
-const extractName = (text) => {
-  const afterIntro = text.match(/(?:about|met|named)\s+(.+)/i)?.[1] || text;
-  const words = afterIntro.match(/[A-Za-z]+/g) || [];
-  const stopWords = new Set(['at', 'on', 'in', 'through', 'during', 'is', 'was', 'go', 'goes', 'went', 'works', 'lives', 'said', 'has', 'and']);
-  if (!words[0]) return 'New connection';
-  return words[1] && !stopWords.has(words[1].toLowerCase()) ? `${words[0]} ${words[1]}` : words[0];
-};
-const parseCapture = (text) => {
-  const name = extractName(text);
-  const where = extract(text, [/(?:at|on|through|during)\s+([^.!?]+)/i], 'A memorable first meeting');
-  const fact = extract(text, [/(?:told me|mentioned|remember that|is|works as|works at|go(?:es)? to|went to)\s+([^.!?]+)/i], text.replace(new RegExp(`^${name}\\s*`, 'i'), ''));
-  return { name, where, facts: [fact] };
-};
-
-generateButton.addEventListener('click', async () => {
-  const text = transcript.value.trim();
-  if (!text) return showToast('Add a voice note or a few details first.');
-  const fallback = parseCapture(text);
-  generateButton.disabled = true;
-  captureHint.textContent = 'AI is matching this note and organizing the profile…';
-  try {
-    await saveWithAI(text, fallback);
-  } catch (error) {
-    addContact(fallback);
-    showToast(`Saved locally — AI is unavailable right now.`);
-    console.warn(error);
-  } finally {
-    generateButton.disabled = false;
-    captureHint.textContent = 'Voice notes become an organized profile in seconds.';
-    transcript.value = '';
-  }
-});
-
-searchInput.addEventListener('input', render);
-document.querySelectorAll('.filter:not(.manual-trigger)').forEach((filter) => filter.addEventListener('click', () => {
-  document.querySelectorAll('.filter').forEach((item) => item.classList.remove('active'));
-  filter.classList.add('active');
-  sortMode = filter.textContent === 'A–Z' ? 'az' : filter.textContent === 'Recently added' ? 'recent' : 'all';
-  render();
-}));
-manualForm.addEventListener('submit', async (event) => {
-=======
 $('#deckWindow').addEventListener('wheel', event => {
->>>>>>> d224744b696f5e66fac191d4e9d8d09289b1642a
   event.preventDefault();
-  if (wheelLocked) return;
-  wheelDelta += event.deltaY;
-  if (Math.abs(wheelDelta) < 100) return;
-  moveDeck(wheelDelta > 0 ? 1 : -1);
-  wheelDelta = 0;
-  wheelLocked = true;
-  window.setTimeout(() => { wheelLocked = false; }, 550);
+  moveDeck(event.deltaY > 0 ? 1 : -1);
 }, { passive: false });
 
 document.addEventListener('keydown', event => {
   if (event.key === 'ArrowRight') moveDeck(1);
   if (event.key === 'ArrowLeft') moveDeck(-1);
-  if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') { event.preventDefault(); transcript.focus(); }
 });
 
 $('#deckWindow').addEventListener('pointerdown', event => {
@@ -527,100 +387,8 @@ $('#personForm').onsubmit = event => {
   savePeople();
   $('#personDialog').close();
   render();
-  showToast(`${person.name} updated.`);
 };
-$('#personForm').onsubmit = (event) => { event.preventDefault(); const person = buildPerson(new FormData(event.target)); const existing = people.find((item) => samePerson(item.name, person.name)); if (existing) { existing.notes = `${existing.notes}\n• ${person.notes}`; showToast(`${existing.name} updated.`); } else { people.push(person); showToast(`${person.name} added.`); } savePeople(); $('#personDialog').close(); activeLetter = 'ALL'; deckIndex = 0; render(); };
+
 $('#exportBtn').onclick = exportPeople;
 
-let extracting = false;
-let recognition;
-let listening = false;
-let noteBeforeRecording = '';
-
-function setCaptureStatus(message, error = false) {
-  $('#serviceHelp').hidden = true;
-  $('#captureStatus').textContent = message;
-  $('#captureStatus').classList.toggle('error', error);
-}
-
-const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-if (SpeechRecognition) {
-  recognition = new SpeechRecognition();
-  recognition.lang = 'en-US';
-  recognition.continuous = true;
-  recognition.interimResults = true;
-  recognition.onresult = event => {
-    const words = Array.from(event.results).map(result => result[0].transcript).join(' ');
-    $('#meetingNote').value = [noteBeforeRecording, words].filter(Boolean).join(' ').slice(0, 8000);
-  };
-  recognition.onerror = event => {
-    setCaptureStatus(event.error === 'not-allowed'
-      ? 'Microphone access was denied. Allow it in your browser or type your note.'
-      : 'Dictation stopped. Check your microphone and connection, or type your note.', true);
-  };
-  recognition.onend = () => {
-    listening = false;
-    $('#recordBtn').textContent = '● Dictate a note';
-    $('#recordBtn').setAttribute('aria-pressed', 'false');
-  };
-} else {
-  $('#recordBtn').disabled = true;
-  $('#recordBtn').title = 'Use Chrome or Edge for dictation, or type your note.';
-}
-
-$('#recordBtn').onclick = () => {
-  if (!recognition) return;
-  if (listening) return recognition.stop();
-  noteBeforeRecording = $('#meetingNote').value.trim();
-  try {
-    recognition.start();
-    listening = true;
-    $('#recordBtn').textContent = '■ Stop dictation';
-    $('#recordBtn').setAttribute('aria-pressed', 'true');
-    setCaptureStatus('Listening… tell us their name and the details you want to remember.');
-  } catch {
-    setCaptureStatus('Could not start dictation. Try again or type your note.', true);
-  }
-};
-
-$('#personDialog').addEventListener('close', () => {
-  if (listening) recognition.stop();
-});
-
-$('#generateBtn').onclick = async () => {
-  if (extracting) return;
-  const note = $('#meetingNote').value.trim();
-  if (!note) return setCaptureStatus('Dictate or type a note before extracting a profile.', true);
-  if (listening) recognition.stop();
-  extracting = true;
-  $('#cancelBtn').disabled = true;
-  $('#generateBtn').disabled = true;
-  $('#recordBtn').disabled = true;
-  $('#meetingNote').readOnly = true;
-  $('#personForm .modal-actions button:last-child').disabled = true;
-  $('#generateBtn').textContent = 'Extracting…';
-  setCaptureStatus('Finding the details in your memory…');
-  try {
-    const profile = await extractProfile(note);
-    for (const name of ['name', 'role', 'met', 'city', 'phone', 'email', 'notes', 'gender', 'pronouns', 'appearance']) {
-      $('#personForm').elements.namedItem(name).value = profile[name] || '';
-    }
-    $('#personForm').elements.namedItem('events').value = (profile.events || []).join('\n');
-    $('#personForm').elements.namedItem('tags').value = (profile.tags || []).join(', ');
-    setCaptureStatus('Details extracted with Gemini. Review them below, then save your card.');
-  } catch (error) {
-    setCaptureStatus(error.message, true);
-    $('#serviceHelp').hidden = error.code !== 'WRONG_SERVER';
-  } finally {
-    extracting = false;
-    $('#cancelBtn').disabled = false;
-    $('#generateBtn').disabled = false;
-    $('#recordBtn').disabled = !recognition;
-    $('#meetingNote').readOnly = false;
-    $('#personForm .modal-actions button:last-child').disabled = false;
-    $('#generateBtn').textContent = 'Extract profile';
-  }
-};
-
-savePeople();
 render();
