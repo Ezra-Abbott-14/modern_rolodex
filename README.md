@@ -30,9 +30,10 @@ The key stays on the backend; the web server serves only an explicit list of pub
 There is no pretend AI fallback: missing keys, network failures, and quota errors are shown clearly.
 Manual card entry remains available.
 
-`GEMINI_MODEL` is configurable and defaults to `gemini-3.8-flash`; your project must have access
+`GEMINI_MODEL` is configurable and defaults to `gemini-3.1-flash-lite`; your project must have access
 and quota for the selected model. The implementation uses Google's supported REST
-`generateContent` endpoint. `PORT` defaults to 8000. The server binds to this computer only.
+`generateContent` endpoint with output capped at 2,048 tokens. `PORT` defaults to 8000.
+The server binds to this computer only and rejects duplicate listeners on the same port.
 
 ## Tests and demo verification
 
@@ -46,9 +47,12 @@ and quota for the selected model. The implementation uses Google's supported RES
 - To repeat the browser checks against the fixture, use notes containing Jamie Rivera and Casey Morgan;
   `unnamed` triggers a missing-name result. Only those test responses are supplied by the fixture.
 
-Live Gemini extraction and actual microphone transcription still require a real API key and a
-spoken browser test. Successful simulated tests do not establish live model access or accuracy.
-After setting the key, run this full demo twice:
+Live Gemini extraction was verified with the team's local key using Gemini 3.1 Flash-Lite:
+the real browser flow extracted Jamie Rivera and Casey Morgan, saved both cards, and
+found Jamie by appearance after a reload. The original
+3.8 Flash configuration timed out; Flash-Lite with the bounded output passed the live test.
+Actual microphone transcription still requires a spoken browser test.
+To rehearse, run this full demo twice:
 
 1. Introduce the old rolodex: a physical memory aid for the people you meet.
 2. Add a person and dictate: “I met Jamie Rivera at the Rexburg hackathon. They use they/them pronouns,

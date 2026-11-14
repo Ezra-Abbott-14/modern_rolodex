@@ -56,12 +56,13 @@ def call_gemini(note):
     key = os.environ.get('GEMINI_API_KEY', '').strip()
     if not key:
         raise RuntimeError('Gemini is not configured yet. Add GEMINI_API_KEY to .env and restart the server. You can still add a card manually.')
-    model = os.environ.get('GEMINI_MODEL', 'gemini-3.8-flash')
+    model = os.environ.get('GEMINI_MODEL', 'gemini-3.1-flash-lite')
     if not re.fullmatch(r'[a-zA-Z0-9._-]+', model):
         raise RuntimeError('GEMINI_MODEL is invalid. Check your server configuration.')
     body = {'systemInstruction': {'parts': [{'text': PROMPT}]},
             'contents': [{'role': 'user', 'parts': [{'text': note}]}],
-            'generationConfig': {'responseMimeType': 'application/json', 'responseJsonSchema': SCHEMA}}
+            'generationConfig': {'responseMimeType': 'application/json', 'responseJsonSchema': SCHEMA,
+                                 'maxOutputTokens': 2048}}
     request = Request(f'https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent',
                       data=json.dumps(body).encode('utf-8'),
                       headers={'x-goog-api-key': key, 'Content-Type': 'application/json'}, method='POST')
@@ -85,6 +86,17 @@ def call_gemini(note):
     except (KeyError, IndexError, TypeError, ValueError):
         raise RuntimeError('Gemini could not produce a complete profile. Rephrase your note and try again.') from None
     return validate_profile(profile)
+
+
+class LocalHTTPServer(ThreadingHTTPServer):
+    # Windows otherwise permits multiple servers to bind the same address,
+    # sending browser requests unpredictably to old copies after a restart.
+    allow_reuse_address = False
+
+    def server_bind(self):
+        if hasattr(socket, 'SO_EXCLUSIVEADDRUSE'):
+            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 1)
+        super().server_bind()
 
 
 class RolodexHandler(BaseHTTPRequestHandler):
@@ -138,4 +150,5 @@ if __name__ == '__main__':
     load_env()
     port = int(os.environ.get('PORT', '8000'))
     print(f'Rolodexi: http://localhost:{port}', flush=True)
-    ThreadingHTTPServer(('127.0.0.1', port), RolodexHandler).serve_forever()
+    httpd = LocalHTTPServer(('127.0.0.1', port), RolodexHandler)
+    httpd.serve_forever()

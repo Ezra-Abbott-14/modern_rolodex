@@ -47,6 +47,7 @@ class ValidationTests(unittest.TestCase):
             request = upstream.call_args.args[0]
             self.assertIn('generativelanguage.googleapis.com', request.full_url)
             self.assertEqual(json.loads(request.data)['contents'][0]['parts'][0]['text'], 'I met Jamie Rivera.')
+            self.assertEqual(json.loads(request.data)['generationConfig']['maxOutputTokens'], 2048)
 
     @patch.dict(os.environ, {'GEMINI_API_KEY': 'test-key'})
     def test_provider_incomplete_and_quota_error(self):
@@ -59,6 +60,14 @@ class ValidationTests(unittest.TestCase):
 
 
 class HttpTests(unittest.TestCase):
+    def test_app_server_rejects_duplicate_listener(self):
+        first = server.LocalHTTPServer(('127.0.0.1', 0), server.RolodexHandler)
+        try:
+            with self.assertRaises(OSError):
+                server.LocalHTTPServer(first.server_address, server.RolodexHandler)
+        finally:
+            first.server_close()
+
     @classmethod
     def setUpClass(cls):
         cls.httpd = ThreadingHTTPServer(('127.0.0.1', 0), server.RolodexHandler)

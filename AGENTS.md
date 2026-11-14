@@ -8,15 +8,15 @@
 - Deadline: November 14, 2026, 4 p.m. America/Denver (Rexburg, Idaho).
 - Preserve the main-branch Rolodexi style closely: wood case, teal alphabet index, cream stacked cards, retro typography and navigation.
 - Team knows JavaScript, HTML, CSS, Python, C, C++, C#; explain each implementation step before prioritizing speed.
-- Provider: Google Gemini; existing Python backend retained. Team must create a key; live model access/quota and deployment target remain unverified.
+- Provider: Google Gemini; Python backend retained. Team key is configured in ignored .env; Gemini 3.1 Flash-Lite passed a live extraction. Deployment remains local.
 
 ## Run, test, and status
 - Run: `python server.py` or Windows `./start.ps1`; open http://localhost:8000. Bundled Python was located and used successfully.
-- Copy .env.example to .env and set GEMINI_API_KEY privately; optional GEMINI_MODEL defaults to gemini-3.8-flash. Restart after changes.
+- Copy .env.example to .env and set GEMINI_API_KEY privately; optional GEMINI_MODEL defaults to gemini-3.1-flash-lite; output limit 2,048 tokens. Restart after changes.
 - Implemented: browser dictation, editable note, /api/profile Gemini extraction, profile review/save, required fields, localStorage, and existing deck/search/export.
 - Tests: `python -m unittest -v test_server.py`; `node --check app.js`. `python browser_fixture.py` serves simulated Gemini on port 8001 for browser testing only.
-- Verified: 10 unit/HTTP tests; automated browser assertions for extraction/review/save twice/search/reload, nameless input, and missing-key behavior. Gemini responses were simulated.
-- Next: team creates key, then run actual Gemini and spoken-microphone demo checks; neither is verified yet. Go was granted for implementation.
+- Verified: 11 unit/HTTP tests, simulated browser tests, two live Gemini extractions, review/save, reload/appearance search; missing-key and duplicate-listener tests pass.
+- Next: finish a spoken-microphone demo check with the team; actual microphone transcription remains unverified. Go was granted for implementation.
 
 ## Working rules
 - Do the legwork: run, test, research, and fix issues. Product, design, behavior, and tool decisions belong to the team; batch questions in one message.
