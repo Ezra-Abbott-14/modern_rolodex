@@ -1,8 +1,10 @@
 """Gemini extraction and secured Flask/Waitress server entry point."""
 import json
+import logging
 import os
 import re
 import socket
+import ssl
 from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
@@ -74,8 +76,25 @@ def call_gemini(note):
                     404: 'The configured Gemini model is unavailable. Update GEMINI_MODEL.',
                     429: 'Gemini quota is exhausted or busy. Wait briefly and try again.'}
         raise RuntimeError(messages.get(error.code, 'Gemini is temporarily unavailable. Please try again.')) from None
-    except (URLError, TimeoutError, socket.timeout):
-        raise RuntimeError('Could not reach Gemini. Check the internet connection and try again.') from None
+    except (URLError, TimeoutError, socket.timeout) as error:
+        reason = error.reason if isinstance(error, URLError) else error
+        # Log only error class/numeric codes: exception text can contain proxy
+        # credentials or other private network configuration.
+        logging.getLogger(__name__).warning(
+            'Gemini connection failed: type=%s errno=%s winerror=%s',
+            type(reason).__name__, getattr(reason, 'errno', None),
+            getattr(reason, 'winerror', None))
+        if isinstance(reason, PermissionError) or getattr(reason, 'winerror', None) == 10013:
+            message = 'The Python backend is blocked from connecting to Gemini. Restart ./start.ps1 in a normal terminal with internet access; check Python network permissions. Your note is still here.'
+        elif isinstance(reason, socket.gaierror):
+            message = 'The Python backend could not resolve Gemini’s address. Check the backend machine’s internet/DNS connection, then retry. Your note is still here.'
+        elif isinstance(reason, ssl.SSLError):
+            message = 'The Python backend could not establish a secure connection to Gemini. Check the server’s certificates or network proxy; do not disable certificate verification. Your note is still here.'
+        elif isinstance(reason, TimeoutError):
+            message = 'Gemini did not respond before the backend timed out. Please retry shortly. Your note is still here.'
+        else:
+            message = 'Could not reach Gemini from the Python backend. Check its internet connection and terminal log, then retry. Your note is still here.'
+        raise RuntimeError(message) from None
     try:
         candidate = payload['candidates'][0]
         if candidate.get('finishReason') != 'STOP':
