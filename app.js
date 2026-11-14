@@ -582,7 +582,7 @@ $('#generateBtn').onclick = async () => {
     setCaptureStatus('Details extracted with Gemini. Review them below, then save your card.');
   } catch (error) {
     setCaptureStatus(error.message, true);
-    $('#serviceHelp').hidden = error.code !== 'WRONG_SERVER';
+    $('#serviceHelp').hidden = !['WRONG_SERVER', 'BACKEND_UNREACHABLE'].includes(error.code);
   } finally {
     extracting = false;
     $('#cancelBtn').disabled = false;

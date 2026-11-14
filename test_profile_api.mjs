@@ -21,8 +21,14 @@ test('sends the note and returns a valid profile twice', async () => {
 test('Live Server HTML error is identified as wrong server', async () => {
   await assert.rejects(extractProfile('Jamie', async()=>reply(null,405,'text/html')), error => error.code === 'WRONG_SERVER' && error.message.includes('5500'));
 });
-test('opening a file directly never sends the note', async () => {
-  await assert.rejects(extractProfile('Jamie', ()=>assert.fail('must not fetch'), {protocol:'file:'}), {code:'WRONG_SERVER'});
+test('opening a file directly uses the local backend endpoint', async () => {
+  let requestedUrl = '';
+  const result = await extractProfile('Jamie', async (url) => {
+    requestedUrl = url;
+    return reply({profile});
+  }, {protocol:'file:'});
+  assert.equal(requestedUrl, 'http://localhost:8000/api/profile');
+  assert.deepEqual(result, profile);
 });
 test('network failure gives startup instructions', async () => {
   await assert.rejects(extractProfile('Jamie', async()=>{throw new TypeError('Failed to fetch');}), /Keep the terminal running/);

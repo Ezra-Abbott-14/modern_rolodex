@@ -149,23 +149,28 @@ function drawWorld(context, width, height, actors, time) {
 
 function createActor(character, index, contact = null) {
   const width = 900;
-  const height = 420;
-  const angle = index * 1.71;
+  const column = index % 8;
+  const row = Math.floor(index / 8);
+  const homeX = 80 + column * 105;
+  const homeY = 286 + (row % 2) * 55 + (index % 3) * 7;
   return {
     id: contact ? `contact-${contact.id}` : `ambient-${character.id}`,
     character,
     contactName: contact?.name || '',
     showName: Boolean(contact),
-    x: 80 + ((index * 137) % (width - 160)),
-    y: 276 + ((index * 43) % 105),
-    targetX: 80 + (((index + 3) * 191) % (width - 160)),
-    targetY: 276 + (((index + 5) * 47) % 105),
+    x: homeX,
+    y: homeY,
+    homeX,
+    homeY,
+    targetX: clamp(homeX + (index % 2 ? 92 : -92), 45, width - 45),
+    targetY: clamp(homeY + (index % 3 - 1) * 42, 270, 380),
     speed: character.walkSpeed * 1.7,
     scale: 2,
     walkFrame: index % 2,
     nextTurn: 800 + index * 137,
     opacity: contact ? 1 : 0.92,
-    angle
+    wanderPhase: index * 1.71,
+    wanderCount: 0
   };
 }
 
@@ -197,9 +202,12 @@ export function initStreetValleyWorld({ canvas, getContacts }) {
   }
 
   function chooseNextTarget(actor) {
-    actor.targetX = 50 + Math.random() * (width - 100);
-    actor.targetY = 278 + Math.random() * 92;
-    actor.nextTurn = 1200 + Math.random() * 2600;
+    actor.wanderCount += 1;
+    actor.wanderPhase += 0.9 + Math.random() * 0.8;
+    const radius = 85 + Math.random() * 105;
+    actor.targetX = clamp(actor.homeX + Math.cos(actor.wanderPhase) * radius, 45, width - 45);
+    actor.targetY = clamp(actor.homeY + Math.sin(actor.wanderPhase) * 42 + (Math.random() - 0.5) * 24, 270, 380);
+    actor.nextTurn = 1500 + Math.random() * 2800;
   }
 
   function updateActors(delta, now) {
@@ -210,8 +218,21 @@ export function initStreetValleyWorld({ canvas, getContacts }) {
       if (distance < 3 || now > actor.nextTurn) chooseNextTarget(actor);
       const directionX = (actor.targetX - actor.x) / Math.max(distance, 1);
       const directionY = (actor.targetY - actor.y) / Math.max(distance, 1);
-      actor.x = clamp(actor.x + directionX * actor.speed * delta, 45, width - 45);
-      actor.y = clamp(actor.y + directionY * actor.speed * delta, 270, 380);
+      let separationX = 0;
+      let separationY = 0;
+      actors.forEach(other => {
+        if (other === actor) return;
+        const gapX = actor.x - other.x;
+        const gapY = actor.y - other.y;
+        const gap = Math.hypot(gapX, gapY);
+        if (gap > 0 && gap < 34) {
+          const push = (34 - gap) / 34;
+          separationX += (gapX / gap) * push;
+          separationY += (gapY / gap) * push;
+        }
+      });
+      actor.x = clamp(actor.x + (directionX * actor.speed + separationX * 0.9) * delta, 45, width - 45);
+      actor.y = clamp(actor.y + (directionY * actor.speed + separationY * 0.9) * delta, 270, 380);
       actor.walkFrame = Math.floor(now / 180) % 2;
     });
   }

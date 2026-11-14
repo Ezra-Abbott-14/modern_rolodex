@@ -80,8 +80,9 @@ For this demo, consistently use that exact hostname and port.
 VS Code's **Go Live / Live Server** normally opens `http://127.0.0.1:5500/index.html`.
 That server can display the HTML/CSS/JavaScript, but it does not execute `server.py`.
 The Extract button requests `/api/profile` on the same server as the page. On port
-5500 it reaches Live Server, which has no Gemini endpoint. This was the confirmed
-cause of the team's reported “Could not reach the profile service” error.
+5500 it reaches Live Server, which has no Gemini endpoint. A directly opened `index.html`
+can use the backend on `http://localhost:8000` when the Python server is running, but the
+recommended demo path is still the complete Python app on port 8000.
 
 Do not use Live Server or double-click `index.html` for the end-to-end demo.
 Use the Python app on port 8000. Both the frontend and backend are served together.
