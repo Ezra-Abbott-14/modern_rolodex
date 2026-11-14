@@ -121,7 +121,10 @@ const seed = [
   }
 ];
 
-let people = loadPeople();
+const CONTACT_FIELDS = ['name', 'role', 'met', 'city', 'phone', 'email', 'notes', 'gender', 'pronouns', 'appearance'];
+let people = [];
+let storageReady = false;
+let storageLoading = true;
 let activeLetter = 'ALL';
 let deckIndex = 0;
 let visiblePeople = sortByLastName(people);
@@ -131,46 +134,79 @@ let wheelLocked = false;
 
 const $ = selector => document.querySelector(selector);
 
-function loadPeople() {
+function apiError(message, code) {
+  const error = new Error(message);
+  error.code = code;
+  return error;
+}
+
+async function apiRequest(path, options = {}) {
+  let response;
   try {
-    const saved = JSON.parse(localStorage.getItem('retro-rolodex') || 'null');
-    if (Array.isArray(saved) && saved.every(person => person && typeof person.name === 'string' && person.name.trim() && Array.isArray(person.tags))) return saved;
-  } catch { /* Recover gracefully from unavailable or corrupted storage. */ }
-  return structuredClone(seed);
-}
-
-function savePeople() {
-  localStorage.setItem('retro-rolodex', JSON.stringify(people));
-}
-
-function normalizeName(value) {
-  return String(value || '').toLowerCase().replace(/[^a-z0-9 ]/g, '').replace(/\s+/g, ' ').trim();
-}
-
-function samePerson(first, second) {
-  const firstKey = normalizeName(first);
-  return firstKey !== '' && firstKey === normalizeName(second);
-}
-
-function mergeUnique(first, second) {
-  return [...new Set([...(first || []), ...(second || [])].map(value => String(value).trim()).filter(Boolean))];
-}
-
-function mergePerson(existing, incoming) {
-  for (const field of ['role', 'met', 'city', 'phone', 'email', 'appearance', 'gender', 'pronouns']) {
-    if (incoming[field] && incoming[field] !== '—' && incoming[field] !== 'New connection' && incoming[field] !== 'Somewhere interesting') {
-      existing[field] = incoming[field];
-    }
+    response = await fetch(path, {
+      ...options,
+      headers: {'Content-Type': 'application/json', ...(options.headers || {})}
+    });
+  } catch {
+    throw apiError('The database server could not be reached. Start the backend and try again.', 'BACKEND_UNREACHABLE');
   }
-  if (incoming.notes && incoming.notes !== 'Add a note next time you see them.') {
-    const oldNotes = String(existing.notes || '');
-    if (!oldNotes.toLowerCase().includes(incoming.notes.toLowerCase())) {
-      existing.notes = oldNotes ? `${oldNotes}\n• ${incoming.notes}` : incoming.notes;
-    }
+  let payload = {};
+  try {
+    payload = await response.json();
+  } catch {
+    throw apiError('The database server returned an invalid response. Try again.', 'BAD_RESPONSE');
   }
-  existing.events = mergeUnique(existing.events, incoming.events);
-  existing.tags = mergeUnique(existing.tags, incoming.tags);
-  return existing;
+  if (!response.ok) throw apiError(payload.error || `Database request failed (${response.status}).`, 'DATABASE_ERROR');
+  return payload;
+}
+
+function toUiPerson(contact, index = 0) {
+  const name = String(contact.name || '').trim();
+  return {
+    ...contact,
+    name,
+    role: contact.role || 'New connection',
+    met: contact.met || 'Somewhere interesting',
+    city: contact.city || '—',
+    phone: contact.phone || '—',
+    email: contact.email || '—',
+    notes: contact.notes || 'Add a note next time you see them.',
+    events: Array.isArray(contact.events) ? contact.events : [],
+    tags: Array.isArray(contact.tags) ? contact.tags : [],
+    avatar: name.split(' ').map(part => part[0]).join('').slice(0, 2).toUpperCase(),
+    tone: ['teal', 'rust', 'gold'][index % 3]
+  };
+}
+
+function contactPayload(person, sourceText) {
+  const payload = {};
+  CONTACT_FIELDS.forEach(field => { payload[field] = person[field] ?? null; });
+  payload.events = Array.isArray(person.events) ? person.events : [];
+  payload.tags = Array.isArray(person.tags) ? person.tags : [];
+  if (sourceText) payload.source_text = sourceText;
+  return payload;
+}
+
+async function loadPeople() {
+  const payload = await apiRequest('/api/contacts');
+  if (!Array.isArray(payload.contacts)) throw apiError('The database returned an invalid contact list.', 'BAD_RESPONSE');
+  return payload.contacts.map((contact, index) => toUiPerson(contact, index));
+}
+
+async function createPerson(person, sourceText) {
+  const payload = await apiRequest('/api/contacts', {
+    method: 'POST',
+    body: JSON.stringify(contactPayload(person, sourceText))
+  });
+  return toUiPerson(payload.contact, people.length);
+}
+
+async function updatePerson(id, changes) {
+  const payload = await apiRequest(`/api/contacts/${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    body: JSON.stringify(changes)
+  });
+  return toUiPerson(payload.contact, people.findIndex(person => person.id === id));
 }
 
 function escapeHtml(value) {
@@ -427,6 +463,7 @@ $('#deckWindow').addEventListener('pointerup', event => {
 });
 
 $('#addBtn').onclick = () => {
+  if (!storageReady) return setCaptureStatus(storageLoading ? 'Loading your contacts…' : 'The database is unavailable. Start the backend and try again.', true);
   $('#personForm').reset();
   setCaptureStatus('Type a note, extract the details, then review and save below.');
   $('#personDialog').showModal();
@@ -437,30 +474,24 @@ $('#personDialog').addEventListener('cancel', event => {
   if (extracting) event.preventDefault();
 });
 
-$('#personForm').onsubmit = event => {
+$('#personForm').onsubmit = async event => {
   event.preventDefault();
 
-  if (extracting) return;
+  if (extracting || !storageReady) return;
   const person = buildPerson(new FormData(event.target));
   if (!person.name) return setCaptureStatus('Please enter the person’s name.', true);
-  const previousPeople = [...people];
-  const existing = people.find(item => samePerson(item.name, person.name));
-  const savedPerson = existing ? mergePerson(existing, person) : person;
-  if (!existing) people.push(person);
   try {
-    savePeople();
-  } catch {
-    people = previousPeople;
-    setCaptureStatus('Your browser could not save this card. Export existing cards or free browser storage, then retry.', true);
-    return;
+    const savedPerson = await createPerson(person, $('#meetingNote').value.trim());
+    people.push(savedPerson);
+    activeLetter = 'ALL';
+    $('#search').value = '';
+    deckIndex = sortByLastName(people).findIndex(item => item.id === savedPerson.id);
+    $('#personDialog').close();
+    render();
+    setCaptureStatus(`${savedPerson.name} added.`);
+  } catch (error) {
+    setCaptureStatus(error.message, true);
   }
-  activeLetter = 'ALL';
-  $('#search').value = '';
-  deckIndex = sortByLastName(people).findIndex(item => item.id === savedPerson.id);
-
-  $('#personDialog').close();
-  render();
-  setCaptureStatus(existing ? `${existing.name} updated — new information was added to the same card.` : `${person.name} added.`);
 };
 
 $('#exportBtn').onclick = exportPeople;
@@ -510,7 +541,7 @@ function populateUpdateNames() {
   select.replaceChildren();
   sortByLastName(people).forEach(person => {
     const option = document.createElement('option');
-    option.value = person.name;
+    option.value = person.id;
     option.textContent = person.name;
     select.append(option);
   });
@@ -518,7 +549,7 @@ function populateUpdateNames() {
 }
 
 function loadUpdateFields() {
-  const person = people.find(item => samePerson(item.name, $('#updateName').value));
+  const person = people.find(item => item.id === $('#updateName').value);
   if (!person) return;
   document.querySelectorAll('[data-update-value]').forEach(input => {
     const field = input.dataset.updateValue;
@@ -548,28 +579,57 @@ document.querySelectorAll('[data-field]').forEach(checkbox => {
   };
 });
 
-$('#updateForm').onsubmit = event => {
+let updating = false;
+
+$('#updateForm').onsubmit = async event => {
   event.preventDefault();
-  const person = people.find(item => samePerson(item.name, $('#updateName').value));
+  if (updating || !storageReady) return;
+  const person = people.find(item => item.id === $('#updateName').value);
   const selected = [...event.target.querySelectorAll('[data-field]:checked')];
   if (!person) return;
   if (!selected.length) return window.alert('Select at least one field to update.');
+  const changes = {};
   selected.forEach(checkbox => {
     const field = checkbox.dataset.field;
     const input = event.target.querySelector(`[data-update-value="${field}"]`);
-    if (field === 'tags') person.tags = input.value.split(',').map(value => value.trim()).filter(Boolean);
-    else if (field === 'events') person.events = input.value.split('\n').map(value => value.trim()).filter(Boolean);
-    else person[field] = input.value.trim();
+    if (field === 'tags') changes.tags = input.value.split(',').map(value => value.trim()).filter(Boolean);
+    else if (field === 'events') changes.events = input.value.split('\n').map(value => value.trim()).filter(Boolean);
+    else changes[field] = input.value.trim();
   });
-  savePeople();
-  $('#updateDialog').close();
-  activeLetter = 'ALL';
-  $('#search').value = '';
-  deckIndex = sortByLastName(people).findIndex(item => item.id === person.id);
-  render();
+  updating = true;
+  try {
+    const updatedPerson = await updatePerson(person.id, changes);
+    people[people.findIndex(item => item.id === person.id)] = updatedPerson;
+    $('#updateDialog').close();
+    activeLetter = 'ALL';
+    $('#search').value = '';
+    deckIndex = sortByLastName(people).findIndex(item => item.id === updatedPerson.id);
+    render();
+    setCaptureStatus(`${updatedPerson.name} updated.`);
+  } catch (error) {
+    setCaptureStatus(error.message, true);
+  } finally {
+    updating = false;
+  }
 };
 
+async function startApp() {
+  try {
+    people = await loadPeople();
+    storageReady = true;
+    render();
+    setCaptureStatus(people.length ? 'Your contacts are ready.' : 'Your database is empty. Add your first contact.');
+  } catch (error) {
+    people = [];
+    setCaptureStatus(error.message, true);
+    render();
+  } finally {
+    storageLoading = false;
+  }
+}
+
 render();
+startApp();
 
 initStreetValleyWorld({
   canvas: document.querySelector('#streetValleyCanvas'),

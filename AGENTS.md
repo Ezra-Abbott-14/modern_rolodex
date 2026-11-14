@@ -6,16 +6,16 @@ Treat documented decisions as the source of truth; label uncertainty and never i
 ## Product and current status
 - Rolodexi helps people remember new acquaintances: note/dictation -> Gemini extraction -> reviewed card.
 - Category: reimagine a past invention for today. Deadline: Nov 14, 2026, 4 p.m. America/Denver.
-- Current app: local Python server, Gemini profile endpoint, browser review/save flow, localStorage cards, deck/search/export, and Street Valley.
-- Current storage is browser localStorage; shared database, accounts, retention enforcement, and cloud hosting are not implemented.
-- Current tests: `python -m unittest -v test_server.py`; `node --test test_profile_api.mjs`; `node --check app.js`.
+- Current app: local Python server, Gemini profile endpoint, browser review/save flow, database-backed contact routes, deck/search/export, and Street Valley.
+- Current storage path is AWS RDS MySQL through the Python backend; the RDS schema and hosted flow still need final network/deployment verification. Accounts and retention enforcement are not implemented.
+- Current tests: `python -m unittest -v test_server.py`; `python -m unittest discover -s database -p 'test_*.py'`; `node --test test_profile_api.mjs`; `node --check app.js`.
 
 ## Database workstream
 - Own storage design, migrations, database-facing tests, and coordination contracts.
 - Contacts belong to user accounts and are private by default; account auth is a high-priority stretch goal.
 - Sharing, export, account deletion, and AWS/cloud hosting are stretch goals.
-- Intended data includes durable contact profiles, meeting-source records, compressed voice recordings, and consent/date evidence.
-- Source retention is tentatively discussed as 30 days after contact update; timer scope, backups, and deletion behavior remain open.
+- Intended data includes durable contact profiles, meeting-source records, and consent/date evidence. Compressed voice recordings are deferred because the recording flow does not exist.
+- Source text receives a 30-day expiration timestamp from creation; automatic cleanup, backups, and provider-side deletion remain unimplemented.
 
 ## Working rules
 - Product, UI, JS behavior, AI provider, network, and deployment decisions belong to their owners; ask before changing adjacent code.

@@ -18,6 +18,41 @@ def example_profile():
             'events': ['Won a robotics contest'], 'tags': ['robotics']}
 
 
+class FakeContactRepository:
+    def __init__(self):
+        self.contact = {'id': 'contact-1', 'owner_id': server.DEV_OWNER_ID,
+                        'name': 'Jamie Rivera', 'role': None, 'met': None,
+                        'city': None, 'phone': None, 'email': None, 'notes': None,
+                        'gender': None, 'pronouns': None, 'appearance': None,
+                        'events': [], 'tags': []}
+        self.calls = []
+
+    def create_contact(self, owner_id, profile, **kwargs):
+        self.calls.append(('create', owner_id, profile, kwargs))
+        return {**self.contact, **profile, 'owner_id': owner_id}
+
+    def list_contacts(self, owner_id):
+        self.calls.append(('list', owner_id))
+        return [{**self.contact, 'owner_id': owner_id}]
+
+    def get_contact(self, owner_id, contact_id):
+        self.calls.append(('get', owner_id, contact_id))
+        if contact_id != self.contact['id']:
+            return None
+        return {**self.contact, 'owner_id': owner_id}
+
+    def update_contact(self, owner_id, contact_id, changes, **kwargs):
+        self.calls.append(('update', owner_id, contact_id, changes, kwargs))
+        if contact_id != self.contact['id']:
+            from database.repository import ContactNotFound
+            raise ContactNotFound('not found')
+        self.contact.update(changes)
+        if 'events' in kwargs and kwargs['events'] is not None:
+            self.contact['events'] = kwargs['events']
+        if 'tags' in kwargs and kwargs['tags'] is not None:
+            self.contact['tags'] = kwargs['tags']
+
+
 class ValidationTests(unittest.TestCase):
     def test_valid_profile(self):
         self.assertEqual(server.validate_profile(example_profile())['name'], 'Jamie Rivera')
@@ -32,6 +67,12 @@ class ValidationTests(unittest.TestCase):
                 profile[key] = value
                 with self.assertRaises(ValueError):
                     server.validate_profile(profile)
+
+    def test_contact_body_enforces_database_lengths(self):
+        profile = example_profile()
+        profile['email'] = 'x' * 321
+        with self.assertRaisesRegex(ValueError, 'email is too long'):
+            server.validate_contact_body(profile)
 
     def test_deduplicates_lists(self):
         profile = example_profile()
@@ -91,6 +132,17 @@ class HttpTests(unittest.TestCase):
         with response:
             return response.status, json.load(response)
 
+    def request_json(self, method, path, body=None):
+        data = None if body is None else json.dumps(body).encode()
+        request = Request(self.base + path, data=data, method=method,
+                          headers={'Content-Type': 'application/json'} if data else {})
+        try:
+            response = urlopen(request)
+        except HTTPError as error:
+            response = error
+        with response:
+            return response.status, json.load(response)
+
     def test_empty_wrong_and_long_input(self):
         for body in ({'note': ''}, {'note': []}, [], {'note': 'a' * 8001}):
             self.assertEqual(self.post(body)[0], 400)
@@ -117,6 +169,39 @@ class HttpTests(unittest.TestCase):
             with self.assertRaises(HTTPError) as caught:
                 urlopen(self.base + path)
             self.assertEqual(caught.exception.code, 404)
+
+    @patch.dict(os.environ, {'DB_HOST': 'db', 'DB_NAME': 'rolodexi',
+                             'DB_USER': 'app', 'DB_PASSWORD': 'secret'})
+    def test_contact_routes_use_repository_and_owner_scope(self):
+        repository = FakeContactRepository()
+        with patch('server.get_repository', return_value=repository):
+            status, payload = self.request_json('POST', '/api/contacts',
+                                                {**example_profile(), 'source_text': 'Met Jamie.'})
+            self.assertEqual(status, 201)
+            self.assertEqual(payload['contact']['id'], 'contact-1')
+            self.assertEqual(repository.calls[0][1], server.DEV_OWNER_ID)
+            self.assertEqual(repository.calls[0][3]['source_text'], 'Met Jamie.')
+
+            status, payload = self.request_json('GET', '/api/contacts')
+            self.assertEqual(status, 200)
+            self.assertEqual(payload['contacts'][0]['owner_id'], server.DEV_OWNER_ID)
+
+            status, payload = self.request_json('PATCH', '/api/contacts/contact-1',
+                                                {'notes': 'Updated', 'events': []})
+            self.assertEqual(status, 200)
+            self.assertEqual(payload['contact']['notes'], 'Updated')
+            update = repository.calls[-2]
+            self.assertEqual(update[1], server.DEV_OWNER_ID)
+            self.assertEqual(update[4]['events'], [])
+
+    @patch.dict(os.environ, {'DB_HOST': 'db', 'DB_NAME': 'rolodexi',
+                             'DB_USER': 'app', 'DB_PASSWORD': 'secret'})
+    def test_missing_contact_is_not_reported_as_database_failure(self):
+        repository = FakeContactRepository()
+        with patch('server.get_repository', return_value=repository):
+            status, payload = self.request_json('PATCH', '/api/contacts/missing', {'notes': 'x'})
+        self.assertEqual(status, 404)
+        self.assertEqual(payload['error'], 'Contact not found.')
 
 
 if __name__ == '__main__':

@@ -3,6 +3,7 @@ import json
 import os
 import re
 import socket
+from datetime import datetime, timedelta, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.error import HTTPError, URLError
@@ -10,6 +11,9 @@ from urllib.request import Request, urlopen
 
 ROOT = Path(__file__).resolve().parent
 FIELDS = ('name', 'role', 'met', 'city', 'phone', 'email', 'notes', 'gender', 'pronouns', 'appearance')
+FIELD_LIMITS = {'name': 255, 'role': 255, 'met': 255, 'city': 255, 'phone': 64,
+                'email': 320, 'gender': 128, 'pronouns': 128, 'notes': 65535,
+                'appearance': 65535}
 SCHEMA = {'type': 'object', 'properties': {
     **{key: {'type': 'string'} for key in FIELDS},
     'events': {'type': 'array', 'items': {'type': 'string'}},
@@ -22,6 +26,76 @@ name: person's name, or empty if not stated. met: where the user met them.
 appearance: description stated. events: memorable events or future plans stated.
 notes: concise faithful summary. tags: up to 5 short topics present in the note.
 If the input is not about a person, return empty fields. Return the required JSON only."""
+
+_repository = None
+DEV_OWNER_ID = "dev-user-1"
+
+
+def database_configured():
+    return all(os.environ.get(key, "").strip() for key in ("DB_HOST", "DB_NAME", "DB_USER", "DB_PASSWORD"))
+
+
+def get_repository():
+    global _repository
+    if _repository is None:
+        from database.repository import ContactRepository
+        import mysql.connector
+
+        def connect_database():
+            return mysql.connector.connect(
+                host=os.environ["DB_HOST"].strip(),
+                port=int(os.environ.get("DB_PORT", "3306")),
+                database=os.environ["DB_NAME"].strip(),
+                user=os.environ["DB_USER"].strip(),
+                password=os.environ["DB_PASSWORD"],
+                autocommit=False,
+            )
+
+        _repository = ContactRepository(connect_database)
+    return _repository
+
+
+def reset_repository_for_tests():
+    global _repository
+    _repository = None
+
+
+def json_safe(value):
+    if isinstance(value, datetime):
+        return value.isoformat(timespec="microseconds") + "Z"
+    if isinstance(value, dict):
+        return {key: json_safe(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [json_safe(item) for item in value]
+    return value
+
+
+def validate_contact_body(body, *, partial=False):
+    if not isinstance(body, dict):
+        raise ValueError("Request body must be a JSON object.")
+    if not partial and not isinstance(body.get("name"), str):
+        raise ValueError("name is required.")
+    profile = {}
+    fields = set(FIELDS)
+    for field in fields:
+        if field not in body:
+            continue
+        value = body[field]
+        if value is not None and not isinstance(value, str):
+            raise ValueError(f"{field} must be a string or null.")
+        if isinstance(value, str) and len(value) > FIELD_LIMITS[field]:
+            raise ValueError(f"{field} is too long.")
+        profile[field] = value
+    for list_field in ("events", "tags"):
+        if list_field in body:
+            values = body[list_field]
+            if not isinstance(values, list) or any(not isinstance(value, str) for value in values):
+                raise ValueError(f"{list_field} must be an array of strings.")
+            profile[list_field] = values
+    source_text = body.get("source_text")
+    if source_text is not None and (not isinstance(source_text, str) or len(source_text) > 8000):
+        raise ValueError("source_text must be a string of up to 8,000 characters.")
+    return profile, source_text
 
 
 def load_env():
@@ -107,22 +181,24 @@ class RolodexHandler(BaseHTTPRequestHandler):
         self.send_header('Content-Length', str(len(body)))
         self.send_header('Cache-Control', 'no-store')
         self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header('Access-Control-Allow-Methods', 'POST, OPTIONS')
+        self.send_header('Access-Control-Allow-Methods', 'GET, POST, PATCH, OPTIONS')
         self.send_header('Access-Control-Allow-Headers', 'Content-Type')
         self.end_headers()
         self.wfile.write(body)
 
     def do_OPTIONS(self):
-        if self.path.split('?', 1)[0] != '/api/profile':
+        if not self.path.split('?', 1)[0].startswith('/api/'):
             return self.send_json(404, {'error': 'Not found'})
         self.send_response(204)
         self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header('Access-Control-Allow-Methods', 'POST, OPTIONS')
+        self.send_header('Access-Control-Allow-Methods', 'GET, POST, PATCH, OPTIONS')
         self.send_header('Access-Control-Allow-Headers', 'Content-Type')
         self.send_header('Access-Control-Max-Age', '300')
         self.end_headers()
 
     def do_POST(self):
+        if self.path == '/api/contacts':
+            return self.create_contact()
         if self.path != '/api/profile':
             return self.send_json(404, {'error': 'Not found'})
         try:
@@ -139,9 +215,96 @@ class RolodexHandler(BaseHTTPRequestHandler):
         except RuntimeError as error:
             self.send_json(503, {'error': str(error)})
 
+    def create_contact(self):
+        try:
+            body = self.read_json()
+            profile, source_text = validate_contact_body(body)
+            if not database_configured():
+                return self.send_json(503, {'error': 'Database is not configured.'})
+            contact = get_repository().create_contact(
+                DEV_OWNER_ID,
+                profile,
+                source_text=source_text,
+                provider='gemini' if source_text else None,
+                model=os.environ.get('GEMINI_MODEL', 'gemini-3.1-flash-lite') if source_text else None,
+                source_expires_at=(datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(days=30)) if source_text else None,
+            )
+            return self.send_json(201, {'contact': json_safe(contact)})
+        except ValueError as error:
+            return self.send_json(400, {'error': str(error)})
+        except Exception:
+            return self.send_json(503, {'error': 'Database is temporarily unavailable.'})
+
+    def do_PATCH(self):
+        match = re.fullmatch(r'/api/contacts/([^/]+)', self.path)
+        if not match:
+            return self.send_json(404, {'error': 'Not found'})
+        try:
+            body = self.read_json()
+            profile, _ = validate_contact_body(body, partial=True)
+            if not database_configured():
+                return self.send_json(503, {'error': 'Database is not configured.'})
+            get_repository().update_contact(
+                DEV_OWNER_ID,
+                match.group(1),
+                profile,
+                events=body.get('events') if 'events' in body else None,
+                tags=body.get('tags') if 'tags' in body else None,
+            )
+            contact = get_repository().get_contact(DEV_OWNER_ID, match.group(1))
+            if contact is None:
+                return self.send_json(404, {'error': 'Contact not found.'})
+            return self.send_json(200, {'contact': json_safe(contact)})
+        except ValueError as error:
+            return self.send_json(400, {'error': str(error)})
+        except Exception as error:
+            from database.repository import ContactNotFound
+            if isinstance(error, ContactNotFound):
+                return self.send_json(404, {'error': 'Contact not found.'})
+            return self.send_json(503, {'error': 'Database is temporarily unavailable.'})
+
+    def read_json(self):
+        length = int(self.headers.get('Content-Length', '0'))
+        if not 0 < length <= 64000:
+            raise ValueError('Request body is missing or too large.')
+        try:
+            return json.loads(self.rfile.read(length).decode('utf-8'))
+        except (json.JSONDecodeError, UnicodeError) as error:
+            raise ValueError('Invalid JSON request.') from error
+
     def do_GET(self):
         if self.path == '/api/health':
-            return self.send_json(200, {'configured': bool(os.environ.get('GEMINI_API_KEY', '').strip())})
+            gemini_configured = bool(os.environ.get('GEMINI_API_KEY', '').strip())
+            if not database_configured():
+                return self.send_json(503, {'status': 'degraded', 'configured': gemini_configured, 'database': 'not_configured'})
+            try:
+                connection = get_repository().connection_factory()
+                cursor = connection.cursor()
+                cursor.execute('SELECT 1')
+                cursor.fetchone()
+                connection.close()
+                return self.send_json(200, {'status': 'ok', 'configured': gemini_configured, 'database': 'ok'})
+            except Exception:
+                return self.send_json(503, {'status': 'degraded', 'configured': gemini_configured, 'database': 'unavailable'})
+        if self.path == '/api/contacts':
+            if not database_configured():
+                return self.send_json(503, {'error': 'Database is not configured.'})
+            try:
+                contacts = get_repository().list_contacts(DEV_OWNER_ID)
+                return self.send_json(200, {'contacts': json_safe(contacts)})
+            except Exception:
+                return self.send_json(503, {'error': 'Database is temporarily unavailable.'})
+        match = re.fullmatch(r'/api/contacts/([^/]+)', self.path)
+        if match:
+            if not database_configured():
+                return self.send_json(503, {'error': 'Database is not configured.'})
+            try:
+                contact = get_repository().get_contact(DEV_OWNER_ID, match.group(1))
+                if contact is None:
+                    return self.send_json(404, {'error': 'Contact not found.'})
+                return self.send_json(200, {'contact': json_safe(contact)})
+            except Exception:
+                return self.send_json(503, {'error': 'Database is temporarily unavailable.'})
         # Only serve explicit public assets, never secrets, source code, or Git metadata.
         assets = {'/': ('index.html', 'text/html; charset=utf-8'),
                   '/index.html': ('index.html', 'text/html; charset=utf-8'),
@@ -166,5 +329,6 @@ if __name__ == '__main__':
     load_env()
     port = int(os.environ.get('PORT', '8000'))
     print(f'Rolodexi: http://localhost:{port}', flush=True)
-    httpd = LocalHTTPServer(('127.0.0.1', port), RolodexHandler)
+    # Bind all interfaces in hosted environments; local development still uses localhost.
+    httpd = LocalHTTPServer(('0.0.0.0', port), RolodexHandler)
     httpd.serve_forever()

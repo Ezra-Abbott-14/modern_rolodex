@@ -20,10 +20,13 @@ but details remain; **open** means no choice exists.
 | 2026-11-14 | Use the provisioned AWS RDS MySQL 8.4 instance for the MVP database. | Decided | Single-AZ development instance; cloud deployment is the goal. |
 | 2026-11-14 | Store all current UI profile fields, plus ownership and lifecycle metadata. | Decided | `avatar` and `tone` remain presentation values. |
 | 2026-11-14 | Separate durable contacts from meeting-source records. | Decided | Source text is retained separately from the durable profile. |
-| 2026-11-14 | Store UI events as memorable facts and tags in child tables. | Provisional | Duplicate-contact behavior is still open. |
+| 2026-11-14 | Store UI events as memorable facts and tags in child tables. | Decided | The product calls events “memories”; they are not an audit log. |
+| 2026-11-14 | Allow duplicate contact names. | Decided | Creation never silently merges; merging requires explicit user confirmation. |
 | 2026-11-14 | Use `dev-user-1` as the temporary owner until authentication exists. | Decided | Replace with the auth provider subject later. |
 | 2026-11-14 | Defer audio storage and raw AI response storage. | Decided | No recording flow exists; S3 is future work. |
-| 2026-11-14 | Do not enforce automatic source deletion in the first database slice. | Decided | Store expiration metadata; deletion policy remains open. |
+| 2026-11-14 | Do not enforce automatic source deletion in the first database slice. | Decided | Source text receives a 30-day expiration timestamp; cleanup is not implemented yet. |
+| 2026-11-14 | Start with an empty cloud database. | Decided | Existing browser localStorage cards are not imported; demo cards will be added after the flow is working. |
+| 2026-11-14 | Use a fixed development owner for the MVP. | Decided | `dev-user-1` is temporary and means public deployment is not private until auth is added. |
 
 The initial schema is in `database/001_initial_schema.sql`; the JSON contract is in
 `database-contract.md`. These are the first implementation artifacts, not the final

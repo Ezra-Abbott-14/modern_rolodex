@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS contacts (
     updated_at DATETIME(6) NOT NULL,
     deleted_at DATETIME(6) NULL,
     PRIMARY KEY (id),
+    UNIQUE KEY uq_contacts_owner_id (owner_id, id),
     INDEX idx_contacts_owner_name (owner_id, normalized_name),
     INDEX idx_contacts_owner_updated (owner_id, updated_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
@@ -39,10 +40,11 @@ CREATE TABLE IF NOT EXISTS meeting_sources (
     model VARCHAR(128) NULL,
     provider_request_id VARCHAR(255) NULL,
     PRIMARY KEY (id),
+    UNIQUE KEY uq_sources_owner_id (owner_id, id),
     INDEX idx_sources_owner_created (owner_id, created_at),
     INDEX idx_sources_expiration (expires_at),
-    CONSTRAINT fk_sources_contact FOREIGN KEY (contact_id) REFERENCES contacts (id)
-        ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_sources_contact_owner FOREIGN KEY (owner_id, contact_id) REFERENCES contacts (owner_id, id)
+        ON DELETE RESTRICT ON UPDATE CASCADE,
     CONSTRAINT chk_sources_type CHECK (source_type IN ('text')),
     CONSTRAINT chk_sources_status CHECK (processing_status IN ('pending', 'processed', 'failed', 'expired', 'deleted'))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
@@ -58,10 +60,10 @@ CREATE TABLE IF NOT EXISTS contact_memories (
     deleted_at DATETIME(6) NULL,
     PRIMARY KEY (id),
     INDEX idx_memories_owner_contact (owner_id, contact_id),
-    CONSTRAINT fk_memories_contact FOREIGN KEY (contact_id) REFERENCES contacts (id)
+    CONSTRAINT fk_memories_contact_owner FOREIGN KEY (owner_id, contact_id) REFERENCES contacts (owner_id, id)
         ON DELETE RESTRICT ON UPDATE CASCADE,
-    CONSTRAINT fk_memories_source FOREIGN KEY (source_id) REFERENCES meeting_sources (id)
-        ON DELETE SET NULL ON UPDATE CASCADE
+    CONSTRAINT fk_memories_source_owner FOREIGN KEY (owner_id, source_id) REFERENCES meeting_sources (owner_id, id)
+        ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 CREATE TABLE IF NOT EXISTS contact_tags (
@@ -74,7 +76,7 @@ CREATE TABLE IF NOT EXISTS contact_tags (
     PRIMARY KEY (id),
     UNIQUE KEY uq_tags_owner_contact_name (owner_id, contact_id, normalized_tag),
     INDEX idx_tags_owner_name (owner_id, normalized_tag),
-    CONSTRAINT fk_tags_contact FOREIGN KEY (contact_id) REFERENCES contacts (id)
+    CONSTRAINT fk_tags_contact_owner FOREIGN KEY (owner_id, contact_id) REFERENCES contacts (owner_id, id)
         ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
