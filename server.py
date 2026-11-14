@@ -100,6 +100,30 @@ class LocalHTTPServer(ThreadingHTTPServer):
 
 
 class RolodexHandler(BaseHTTPRequestHandler):
+    PREVIEW_ORIGINS = {'http://localhost:5500', 'http://127.0.0.1:5500'}
+
+    def allowed_origin(self):
+        origin = self.headers.get('Origin')
+        own_origins = {f'http://localhost:{self.server.server_port}', f'http://127.0.0.1:{self.server.server_port}'}
+        return origin is None or origin in self.PREVIEW_ORIGINS or origin in own_origins
+
+    def end_headers(self):
+        origin = self.headers.get('Origin')
+        if origin in self.PREVIEW_ORIGINS:
+            self.send_header('Access-Control-Allow-Origin', origin)
+            self.send_header('Vary', 'Origin')
+        super().end_headers()
+
+    def do_OPTIONS(self):
+        if self.path != '/api/profile':
+            return self.send_json(404, {'error':'Not found'})
+        if not self.allowed_origin():
+            return self.send_json(403, {'error':'This origin cannot use the local profile service.'})
+        self.send_response(204)
+        self.send_header('Access-Control-Allow-Methods', 'POST, OPTIONS')
+        self.send_header('Access-Control-Allow-Headers', 'Content-Type')
+        self.end_headers()
+
     def send_json(self, status, payload):
         body = json.dumps(payload, ensure_ascii=False).encode('utf-8')
         self.send_response(status)
@@ -110,6 +134,8 @@ class RolodexHandler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
     def do_POST(self):
+        if not self.allowed_origin():
+            return self.send_json(403, {'error':'This origin cannot use the local profile service.'})
         if self.path != '/api/profile':
             return self.send_json(404, {'error': 'Not found'})
         try:
