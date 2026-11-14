@@ -134,6 +134,18 @@ const STREET_VALLEY_LINES = {
   'elliot james': 'Collects the sounds most people walk past, because he knows a city is made of small moments.'
 };
 
+const DEFAULT_GENDERS = {
+  'maya rodriguez': 'female',
+  'maya chen': 'female',
+  'maya': 'female',
+  'jon bell': 'male',
+  'priya shah': 'female',
+  'theo martin': 'male',
+  'willow brooks': 'female',
+  'omar patel': 'male',
+  'nina kim': 'female'
+};
+
 let people = loadPeople();
 let activeLetter = 'ALL';
 let deckIndex = 0;
@@ -163,6 +175,24 @@ function normalizeName(value) {
 function samePerson(first, second) {
   const firstKey = normalizeName(first);
   return firstKey !== '' && firstKey === normalizeName(second);
+}
+
+function getPersonGender(person) {
+  return person.gender === undefined
+    ? DEFAULT_GENDERS[normalizeName(person.name)] || ''
+    : person.gender;
+}
+
+function getGenderClass(person) {
+  const gender = normalizeName(getPersonGender(person));
+  if (gender === 'male' || gender === 'man') return 'male';
+  if (gender === 'female' || gender === 'woman') return 'female';
+  return 'human';
+}
+
+function getGenderLabel(person) {
+  const gender = getGenderClass(person);
+  return gender === 'male' ? 'MALE HUMAN' : gender === 'female' ? 'FEMALE HUMAN' : 'HUMAN / NOT SET';
 }
 
 function trimSentence(value) {
@@ -338,9 +368,12 @@ function renderCard(person, position) {
         ${escapeHtml(person.notes)}
       </div>
 
-      <div class="street-valley-note">
-        <div class="label">Street Valley · human take</div>
-        ${escapeHtml(getStreetValleyLine(person))}
+      <div class="street-valley-note ${getGenderClass(person)}">
+        <div class="street-valley-header">
+          <div class="street-valley-portrait ${getGenderClass(person)}" aria-hidden="true"><span class="portrait-head"></span><span class="portrait-body"></span></div>
+          <div><div class="street-valley-kicker">STREET VALLEY · HUMAN TAKE</div><div class="street-valley-gender">${getGenderLabel(person)}</div></div>
+        </div>
+        <div class="street-valley-copy">${escapeHtml(getStreetValleyLine(person))}</div>
       </div>
 
       <div class="tags">${tags}</div>
