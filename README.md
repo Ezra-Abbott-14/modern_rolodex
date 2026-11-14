@@ -229,3 +229,22 @@ To rehearse, run this full demo twice:
 3. Extract with Gemini and verify name, meeting place, appearance, pronouns, and memorable event.
 4. Save the card, find it using the index or appearance search, and reload to show it remains saved.
 5. Explain: “We reinvented yesterday's rolodex to turn a spoken memory into a card for today.”
+
+## Main-branch conflict resolution
+
+The integration of `origin/main` at `cc4699b` preserves the working Rolodexi deck,
+Gemini profile endpoint, dictation/review dialog, and detailed setup instructions.
+Main contained previously committed conflict markers in `app.js` and `styles.css`
+from combining the original Folio grid with the retro deck. Its HTML also replaced
+the deck elements with old capture controls while JavaScript still expected the deck.
+These incompatible fragments were removed rather than carried into the working app.
+The Rolodexi title and AI-powered page description are retained.
+
+The older main-branch `AGENTS.md` described OpenAI, automatic contact merging, and
+explaining only on request. Those instructions were superseded by the team’s explicit
+Gemini selection, requirement to explain each step, and current create/review/save demo.
+Automatic contact merging remains unimplemented; this integration does not add it.
+The team’s earlier work remains available in Git history.
+
+The merge is performed on `ezraAiUse2.0` so the integration can be reviewed and tested
+before merging its pull request into `main`. Do not force-push over another teammate’s work.
