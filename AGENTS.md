@@ -1,22 +1,22 @@
 # Rolodexi hackathon guidance
 
 ## Scope and demo
-- Website for people who struggle to remember new acquaintances: dictate a short meeting note, extract details with Google Gemini, and create a person card.
+- Current main: type a short meeting note, extract details with Google Gemini, and create/update a person card for people who struggle to remember acquaintances.
 - Category: "re-innovating yesterday, reimagine a past invention product or idea for today's world."
-- Two-minute demo: introduce the traditional rolodex, dictate a memory, show extracted details, then find the new card in the deck.
+- Two-minute demo: introduce the traditional rolodex, enter a memory, extract/review/save a card, find it again, and show its Street Valley connection.
 - Fields: name, explicitly stated gender/pronouns, meeting place, memorable events, and described appearance; never invent missing details.
 - Deadline: November 14, 2026, 4 p.m. America/Denver (Rexburg, Idaho).
-- Preserve the main-branch Rolodexi style closely: wood case, teal alphabet index, cream stacked cards, retro typography and navigation.
+- Preserve main's current retro stacked-card design, blue-purple styling, alphabet navigation, and Street Valley; retain the nine example cards and saved contacts.
 - Team knows JavaScript, HTML, CSS, Python, C, C++, C#; explain each implementation step before prioritizing speed.
 - Provider: Google Gemini; Python backend retained. Team key is configured in ignored .env; Gemini 3.1 Flash-Lite passed a live extraction. Deployment remains local.
 
 ## Run, test, and status
 - Run: `python server.py` or Windows `./start.ps1`; open http://localhost:8000. Bundled Python was located and used successfully.
 - Copy .env.example to .env and set GEMINI_API_KEY privately; optional GEMINI_MODEL defaults to gemini-3.1-flash-lite; output limit 2,048 tokens. Restart after changes.
-- Implemented: browser dictation, editable note, /api/profile Gemini extraction, profile review/save, required fields, localStorage, and existing deck/search/export.
-- Tests: `python -m unittest -v test_server.py` (13 tests); `node --test test_profile_api.mjs` (9 tests); `node --check app.js`. `python browser_fixture.py` is test-only on port 8001.
+- Implemented: typed notes, Gemini extraction, optional-field-safe review, exact-name merge, update dialog, localStorage, deck/search/export, and Street Valley.
+- Tests: `python -m unittest -v test_server.py` (13 tests); `node --test test_profile_api.mjs` (10 tests); syntax-check all runtime JS modules. `python browser_fixture.py` is test-only on port 8001.
 - Verified: live Gemini extraction/review/save/reload/search on Python port 8000 and supported Live Server port 5500; Python must stay running on 8000 for preview extraction.
-- Next: finish a spoken-microphone demo check with the team; actual microphone transcription remains unverified. Go was granted for implementation.
+- Verified main repair: nine fresh examples; Add/cancel/manual save, same-name merge, Update, search/index/navigation, export, village pause/resume, real Gemini save/reload. Dictation is not present in current main.
 
 ## Working rules
 - Do the legwork: run, test, research, and fix issues. Product, design, behavior, and tool decisions belong to the team; batch questions in one message.

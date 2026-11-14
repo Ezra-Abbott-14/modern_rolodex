@@ -199,11 +199,9 @@ that triggered it, and the relevant terminal error. Never include the API key or
 | `browser_fixture.py` | Explicit test-only simulated Gemini server on port 8001. |
 | `DEVELOPMENT_LOG.md` | Dated major-update entries: findings, changed files, decisions/rationale, test evidence, limitations, and open questions/answers. |
 
-The browser's speech-recognition service transcribes the voice; it needs browser support,
-microphone permission, and generally internet access. Unsupported browsers can still use typed notes.
-The browser sends the text to Python's `POST /api/profile` (explicit port 8000 when
-using the supported Live Server preview). Python sends the note to Gemini
-The browser sends the typed note to Python's `POST /api/profile`. Python sends the note to Gemini
+Current main uses typed capture; it does not expose a dictation button. The browser
+sends the note to Python's `POST /api/profile` (explicit port 8000 when using the
+supported Live Server preview). Python sends the note to Gemini
 over HTTPS, requests a JSON schema, validates the result, and returns fields for review.
 Unknown details stay empty. Gender is never inferred from pronouns, name, voice, or appearance.
 The key stays on the backend; the web server serves only an explicit list of public files.
@@ -217,10 +215,19 @@ The server binds to this computer only and rejects duplicate listeners on the sa
 
 ## Tests and demo verification
 
+Main's startup was repaired after merge regressions: a duplicate `endpoint`
+declaration prevented all JavaScript initialization, hiding the examples and disabling
+Add person. The existing nine examples remain in the seed data. Existing browser
+contacts are preserved; no reset is required. If the old broken page is still open,
+refresh it after restarting Python. Optional fields hidden in the HTML are skipped
+when populating Gemini results. See DEVELOPMENT_LOG.md for the full repair evidence.
+
 - `python -m unittest -v test_server.py` or Windows `./start.ps1 -Test`: unit and HTTP integration tests.
 - `node --check app.js`: JavaScript syntax check.
-- `node --test test_profile_api.mjs`: nine JavaScript request/response tests, including
+- `node --test test_profile_api.mjs`: ten JavaScript request/response/form tests, including
   the Live Server HTML error that caused the reported failure. No npm packages needed.
+  This also imports the real API module (catching startup syntax errors) and checks
+  that a hidden optional pronouns field cannot break successful Gemini extraction.
 - `python browser_fixture.py`: test-only server at http://localhost:8001 with simulated Gemini responses.
   The normal app never enables this fixture. Do not present it as a real AI demo.
 - Automated browser checks performed: extract Jamie Rivera, review fields, save, extract Casey Morgan,

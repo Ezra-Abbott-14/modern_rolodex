@@ -8,9 +8,6 @@ export async function extractProfile(note, fetcher = globalThis.fetch, page = gl
   const liveServer = page?.protocol === 'http:' && page.port === '5500'
     && ['localhost', '127.0.0.1'].includes(page.hostname);
   const endpoint = liveServer ? `http://${page.hostname}:8000/api/profile` : '/api/profile';
-  const staticPreview = page?.protocol === 'http:' && page?.port && page.port !== '8000';
-  const endpoint = page?.protocol === 'file:' ? 'http://localhost:8000/api/profile' : '/api/profile';
-  if (staticPreview) throw wrongServer();
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 45000);
   try {
@@ -43,4 +40,16 @@ export async function extractProfile(note, fetcher = globalThis.fetch, page = gl
     if (!profile.name.trim()) throw new Error('No person was found. Please include their name.');
     return profile;
   } finally { clearTimeout(timer); }
+}
+
+// Some branches intentionally hide optional fields such as pronouns.
+export function populateProfileForm(form, profile) {
+  for (const name of ['name', 'role', 'met', 'city', 'phone', 'email', 'notes', 'gender', 'pronouns', 'appearance']) {
+    const control = form.elements.namedItem(name);
+    if (control) control.value = profile[name] || '';
+  }
+  for (const name of ['events', 'tags']) {
+    const control = form.elements.namedItem(name);
+    if (control) control.value = (profile[name] || []).join(name === 'tags' ? ', ' : '\n');
+  }
 }

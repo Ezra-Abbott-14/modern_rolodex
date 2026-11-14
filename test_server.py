@@ -110,7 +110,7 @@ class HttpTests(unittest.TestCase):
             self.assertEqual(mocked.call_count, 2)
 
     def test_assets_and_secret_paths(self):
-        for path in ('/', '/app.js', '/styles.css', '/profile-api.mjs'):
+        for path in ('/', '/app.js', '/styles.css', '/profile-api.mjs', '/street_valley_world.js', '/street_valley_characters.js'):
             with urlopen(self.base + path) as response:
                 self.assertEqual(response.status, 200)
         for path in ('/.env', '/.git/config', '/server.py', '/test_server.py', '/../.env'):
@@ -123,11 +123,11 @@ class HttpTests(unittest.TestCase):
             request = Request(self.base + '/api/profile', method='OPTIONS', headers={'Origin':origin, 'Access-Control-Request-Method':'POST', 'Access-Control-Request-Headers':'content-type'})
             with urlopen(request) as response:
                 self.assertEqual(response.status,204)
-                self.assertEqual(response.headers.get('Access-Control-Allow-Origin'),origin)
+                self.assertEqual(response.headers.get_all('Access-Control-Allow-Origin'),[origin])
             with patch('server.call_gemini',return_value=example_profile()):
                 request = Request(self.base + '/api/profile', data=json.dumps({'note':'Jamie Rivera'}).encode(), headers={'Origin':origin,'Content-Type':'application/json'})
                 with urlopen(request) as response:
-                    self.assertEqual(response.headers.get('Access-Control-Allow-Origin'),origin)
+                    self.assertEqual(response.headers.get_all('Access-Control-Allow-Origin'),[origin])
                     self.assertEqual(json.load(response)['profile']['name'],'Jamie Rivera')
 
     def test_untrusted_origins_are_rejected_before_gemini(self):

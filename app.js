@@ -1,5 +1,5 @@
 import { initStreetValleyWorld } from './street_valley_world.js';
-import { extractProfile } from './profile-api.mjs';
+import { extractProfile, populateProfileForm } from './profile-api.mjs';
 
 const seed = [
   {
@@ -409,7 +409,7 @@ $('#deckWindow').addEventListener('wheel', event => {
 }, { passive: false });
 
 document.addEventListener('keydown', event => {
-  if ($('#personDialog').open || /INPUT|TEXTAREA/.test(event.target.tagName)) return;
+  if ($('#personDialog').open || $('#updateDialog').open || /INPUT|TEXTAREA|SELECT/.test(event.target.tagName)) return;
   if (event.key === 'ArrowRight') moveDeck(1);
   if (event.key === 'ArrowLeft') moveDeck(-1);
 });
@@ -486,11 +486,7 @@ $('#generateBtn').onclick = async () => {
   setCaptureStatus('Finding the details in your memory…');
   try {
     const profile = await extractProfile(note);
-    for (const name of ['name', 'role', 'met', 'city', 'phone', 'email', 'notes', 'gender', 'pronouns', 'appearance']) {
-      $('#personForm').elements.namedItem(name).value = profile[name] || '';
-    }
-    $('#personForm').elements.namedItem('events').value = (profile.events || []).join('\n');
-    $('#personForm').elements.namedItem('tags').value = (profile.tags || []).join(', ');
+    populateProfileForm($('#personForm'), profile);
     setCaptureStatus('Details extracted with Gemini. Review them below, then save your card.');
   } catch (error) {
     setCaptureStatus(error.message, true);

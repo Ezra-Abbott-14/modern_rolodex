@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {extractProfile} from './profile-api.mjs';
+import {extractProfile, populateProfileForm} from './profile-api.mjs';
 
 const profile = Object.fromEntries(['name','role','met','city','phone','email','notes','gender','pronouns','appearance'].map(field => [field, field === 'name' ? 'Jamie Rivera' : '']));
 profile.events = [];
@@ -21,14 +21,18 @@ test('sends the note and returns a valid profile twice', async () => {
 test('Live Server HTML error is identified as wrong server', async () => {
   await assert.rejects(extractProfile('Jamie', async()=>reply(null,405,'text/html')), error => error.code === 'WRONG_SERVER' && error.message.includes('5500'));
 });
-test('opening a file directly uses the local backend endpoint', async () => {
-  let requestedUrl = '';
-  const result = await extractProfile('Jamie', async (url) => {
-    requestedUrl = url;
-    return reply({profile});
-  }, {protocol:'file:'});
-  assert.equal(requestedUrl, 'http://localhost:8000/api/profile');
-  assert.deepEqual(result, profile);
+test('opening a file directly explains that a web server is required', async () => {
+  await assert.rejects(extractProfile('Jamie', () => assert.fail('must not fetch'), {protocol:'file:'}), {code:'WRONG_SERVER'});
+});
+
+test('profile form fills events and tags even when optional pronouns field is hidden', () => {
+  const fields=Object.fromEntries(['name','appearance','events','tags'].map(name=>[name,{value:''}]));
+  const form={elements:{namedItem:name=>fields[name] || null}};
+  populateProfileForm(form,{...profile,appearance:'Red glasses',events:['Gallery show','Book club'],tags:['art','books']});
+  assert.equal(fields.name.value,'Jamie Rivera');
+  assert.equal(fields.appearance.value,'Red glasses');
+  assert.equal(fields.events.value,'Gallery show\nBook club');
+  assert.equal(fields.tags.value,'art, books');
 });
 test('network failure gives startup instructions', async () => {
   await assert.rejects(extractProfile('Jamie', async()=>{throw new TypeError('Failed to fetch');}), /Keep the terminal running/);
