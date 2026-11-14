@@ -4,9 +4,7 @@ iHack 2026: reinvent the physical rolodex for people who struggle to remember ne
 Type a short memory, let Gemini extract the details, review the results, and file a new card.
 The restrained editorial layout, dark deck, cream cards, and simple navigation keep the Rolodex practical and professional.
 Street Valley is a separate animated village below the card deck.
-The page also includes an editorial About panel and an expanding film frame below
-the village. To use your own demo clip, place a file named `demo-video.mp4` beside
-`server.py`; the Python server exposes it at `/demo-video.mp4`.
+The current visual pass removes the older prototype's About/Why panels and ticker.
 
 ## Shared devices and secured hosting
 
@@ -24,6 +22,17 @@ The existing developer URL stays loopback-only by default. Do not publish the
 developer's port or change only HOST to expose it without the production settings.
 
 ## Start locally
+
+If Organize note reports **“Could not reach Gemini”** while the page itself loads,
+the browser reached Python but Python could not connect to Google's service.
+On November 14 this was caused by the agent starting Python inside a restricted
+network environment (Windows socket error 10013). Restarting the local backend
+with outbound access restored real Gemini extraction; the key was not the cause.
+When running it yourself, start `./start.ps1` in a normal terminal in this folder
+and keep that terminal open, then use http://localhost:8000. Internet access to
+`https://generativelanguage.googleapis.com` is required. Do not disable TLS checks,
+expose the API key in JavaScript, or run two copies on port 8000. The port-8001
+fixture simulates Gemini and cannot prove the actual upstream connection works.
 
 ### 1. Open a terminal in this project
 

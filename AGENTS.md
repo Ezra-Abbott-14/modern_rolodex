@@ -9,6 +9,7 @@
 - Design: main's working card archive with ui_thinking's cream/ink/acid-green palette and R opening animation; vertical dark alphabet index, bottom-up next-card motion, no About/Why links, ticker, or Remember/Why section. Retain nine seed cards, saved contacts, and Street Valley.
 - Team knows JavaScript, HTML, CSS, Python, C, C++, C#; explain each implementation step before prioritizing speed.
 - Provider: Gemini; Flask/Waitress backend. Key remains server-side. AWS teammate is preparing hosting/RDS; provisioning and public HTTPS verification are explicitly deferred.
+- Start the local backend with outbound network access; a restricted agent process can serve localhost but block Gemini (Windows 10013). After restarting, verify a real fictional-note extraction in the browser; fixture success alone does not verify provider connectivity.
 
 ## Run, test, and status
 - Setup: `./setup.ps1` (or virtualenv + pip install -r requirements.txt). Run `./start.ps1` or activated-venv `python server.py`; local URL http://localhost:8000.

@@ -291,3 +291,31 @@ device are pending that teammate. Do not claim remote deployment is complete.
   unchanged. Did not repeat paid Gemini extraction or deployment checks.
 - Open question: whether the new logo offset is the team's preferred spacing;
   ready for further visual feedback. Work remains on ui_thinking.
+
+## 2026-11-14 — ui_thinking — restore live Organize note connectivity
+
+- Report: the added feature was not working; team clarified Organize note/Gemini.
+- Reproduced in localhost:8000 browser with a fictional note. Add person opened
+  and gender selection worked, but extraction returned “Could not reach Gemini.”
+  This message comes from Python's upstream connection handler, proving the
+  frontend/backend connection worked while the Gemini connection failed.
+- Credential-free HTTPS probe to Google's Gemini host inside the agent sandbox
+  failed with PermissionError / Windows socket error 10013. The identical probe
+  outside that restriction reached Google (expected unauthenticated root 404).
+- Cause: the backend started during UI work inherited restricted outbound
+  network access. Earlier fixture-based integration checks masked that gap;
+  their simulated provider cannot detect a real networking failure.
+- Verified the existing Python server process on port 8000 before stopping it,
+  then restarted ./start.ps1 with outbound access. Kept loopback binding and all
+  existing application security controls. No key, model, or application code edits.
+- Browser retried the real request: success status “Details extracted with
+  Gemini. Review them below, then save your card.” Name and appearance populated
+  correctly from the fictional note. Canceled the dialog afterward; did not save
+  the diagnostic person into the team's contacts.
+- Evidence: ignored test-results/gemini-connection-fixed.jpg. Updated README.md
+  with exact diagnosis/startup guidance; AGENTS.md now requires network-capable
+  startup and a real extraction check after a backend restart. Removed obsolete
+  README claims that the deleted About/film prototype was still available.
+- Validation scope: real browser-to-Python-to-Gemini-to-review path succeeded;
+  no logic changed, so the unchanged automated suite was not repeated. AWS and
+  external-device hosting checks remain deferred. No unresolved local blocker.
