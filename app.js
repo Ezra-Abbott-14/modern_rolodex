@@ -29,8 +29,8 @@ const showToast = (message) => {
 };
 const clean = (value) => String(value || '').replace(/[.!?]+$/, '').trim();
 const nameKey = (value) => clean(value).toLowerCase().replace(/[^a-z0-9]/g, '');
-const firstName = (value) => nameKey(value).split(' ')[0];
 const initials = (name) => name.split(/\s+/).map((part) => part[0]).join('').slice(0, 2).toUpperCase();
+const newId = () => window.crypto?.randomUUID?.() || `contact-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 const formatFact = (value) => {
   const fact = clean(value);
   if (/^(an?|the)\s+/i.test(fact)) return fact.replace(/^(an?|the)\s+/i, '').replace(/^./, (letter) => letter.toUpperCase());
@@ -49,6 +49,7 @@ const samePerson = (left, right) => {
 
 const mergeContact = (contact, incoming) => {
   contact.facts = uniqueFacts([...factsFor(contact), ...incoming.facts]);
+  if (incoming.summary) contact.summary = incoming.summary;
   if (incoming.where && incoming.where !== 'A memorable first meeting' && contact.where !== incoming.where) {
     contact.where = contact.where ? `${contact.where}; ${incoming.where}` : incoming.where;
   }
@@ -65,7 +66,7 @@ const loadContacts = () => {
 
   // Also clean up duplicates from earlier versions of the prototype.
   return saved.reduce((merged, rawContact) => {
-    const contact = { ...rawContact, facts: factsFor(rawContact) };
+    const contact = { ...rawContact, id: rawContact.id || newId(), facts: factsFor(rawContact) };
     const existing = merged.find((item) => samePerson(item.name, contact.name));
     if (existing) mergeContact(existing, contact);
     else merged.push(contact);
@@ -78,7 +79,7 @@ const saveContacts = () => localStorage.setItem(STORAGE_KEY, JSON.stringify(cont
 
 const render = () => {
   const query = searchInput.value.trim().toLowerCase();
-  let visible = contacts.filter((contact) => `${contact.name} ${contact.where} ${factsFor(contact).join(' ')}`.toLowerCase().includes(query));
+  let visible = contacts.filter((contact) => `${contact.name} ${contact.where} ${contact.summary || ''} ${factsFor(contact).join(' ')}`.toLowerCase().includes(query));
   if (sortMode === 'recent') visible = [...visible].reverse();
   if (sortMode === 'az') visible.sort((a, b) => a.name.localeCompare(b.name));
   profileGrid.replaceChildren();
@@ -88,7 +89,7 @@ const render = () => {
     card.className = `profile-card ${contact.color || 'green'}`;
     card.innerHTML = `<div class="card-top"><span class="profile-number">${String(index + 1).padStart(2, '0')}</span><button class="more-button" type="button" aria-label="Remove contact">•••</button></div><div class="portrait"><span>${initials(contact.name)}</span></div><div class="profile-info"><div class="tag">${contact.tag || 'NEW CONNECTION'}</div><h3></h3><p></p><div class="profile-meta"><span>${contact.meta || 'Pronouns not set'}</span><span>·</span><span>${contact.added || 'Added today'}</span></div></div><div class="memory-quote"><div class="memory-label">ORGANIZED MEMORY</div><ul class="fact-list"></ul></div>`;
     card.querySelector('h3').textContent = contact.name;
-    card.querySelector('.profile-info p').textContent = contact.where || 'A memorable first meeting';
+    card.querySelector('.profile-info p').textContent = contact.summary || contact.where || 'A memorable first meeting';
     const factList = card.querySelector('.fact-list');
     factsFor(contact).forEach((fact) => { const item = document.createElement('li'); item.textContent = fact; factList.append(item); });
     card.querySelector('.more-button').addEventListener('click', () => removeContact(contact));
@@ -107,7 +108,7 @@ const removeContact = (contact) => {
 };
 
 const addContact = ({ name, where, facts, tag = 'NEW CONNECTION', color = 'green', meta = 'Pronouns not set' }) => {
-  const incoming = { name: clean(name) || 'New connection', where: clean(where), facts: uniqueFacts(facts), tag, color, meta, added: 'Added just now' };
+  const incoming = { id: newId(), name: clean(name) || 'New connection', where: clean(where), facts: uniqueFacts(facts), tag, color, meta, added: 'Added just now' };
   const existing = contacts.find((contact) => samePerson(contact.name, incoming.name));
   if (existing) {
     mergeContact(existing, incoming);
@@ -120,6 +121,47 @@ const addContact = ({ name, where, facts, tag = 'NEW CONNECTION', color = 'green
   saveContacts();
   render();
   showToast(`${incoming.name} was added to your orbit.`);
+};
+
+const aiContactPayload = (contact) => ({
+  id: contact.id,
+  name: contact.name,
+  where: contact.where || '',
+  summary: contact.summary || '',
+  facts: factsFor(contact),
+});
+
+const saveWithAI = async (note, fallback) => {
+  const response = await fetch('/api/merge', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ contacts: contacts.map(aiContactPayload), new_note: note }),
+  });
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.error || 'The AI merge request failed.');
+  }
+  const result = await response.json();
+  const aiContact = result.contact || {};
+  const matchIndex = contacts.findIndex((contact) => contact.id === result.matched_contact_id);
+  const previous = matchIndex >= 0 ? contacts[matchIndex] : null;
+  const updated = {
+    ...(previous || {}),
+    id: previous?.id || newId(),
+    name: clean(aiContact.name) || fallback.name,
+    where: clean(aiContact.where) || previous?.where || fallback.where,
+    summary: clean(aiContact.summary) || previous?.summary || '',
+    facts: uniqueFacts(aiContact.facts?.length ? aiContact.facts : fallback.facts),
+    tag: previous?.tag || 'NEW CONNECTION',
+    color: previous?.color || 'green',
+    meta: previous?.meta || 'Pronouns not set',
+    added: previous ? 'AI updated just now' : 'Added just now',
+  };
+  if (matchIndex >= 0) contacts[matchIndex] = updated;
+  else contacts.unshift(updated);
+  saveContacts();
+  render();
+  showToast(previous ? `${updated.name} updated by AI.` : `${updated.name} was added by AI.`);
 };
 
 if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
@@ -162,11 +204,23 @@ const parseCapture = (text) => {
   return { name, where, facts: [fact] };
 };
 
-generateButton.addEventListener('click', () => {
+generateButton.addEventListener('click', async () => {
   const text = transcript.value.trim();
   if (!text) return showToast('Add a voice note or a few details first.');
-  addContact(parseCapture(text));
-  transcript.value = '';
+  const fallback = parseCapture(text);
+  generateButton.disabled = true;
+  captureHint.textContent = 'AI is matching this note and organizing the profile…';
+  try {
+    await saveWithAI(text, fallback);
+  } catch (error) {
+    addContact(fallback);
+    showToast(`Saved locally — AI is unavailable right now.`);
+    console.warn(error);
+  } finally {
+    generateButton.disabled = false;
+    captureHint.textContent = 'Voice notes become an organized profile in seconds.';
+    transcript.value = '';
+  }
 });
 
 searchInput.addEventListener('input', render);
@@ -176,10 +230,12 @@ document.querySelectorAll('.filter:not(.manual-trigger)').forEach((filter) => fi
   sortMode = filter.textContent === 'A–Z' ? 'az' : filter.textContent === 'Recently added' ? 'recent' : 'all';
   render();
 }));
-manualForm.addEventListener('submit', (event) => {
+manualForm.addEventListener('submit', async (event) => {
   event.preventDefault();
   const data = new FormData(manualForm);
-  addContact({ name: data.get('name'), where: data.get('where'), facts: [data.get('memory')] });
+  const fallback = { name: data.get('name'), where: data.get('where'), facts: [data.get('memory')] };
+  try { await saveWithAI(`${fallback.name}. ${fallback.where}. ${fallback.facts[0]}`, fallback); }
+  catch (error) { addContact(fallback); console.warn(error); }
   manualForm.reset();
   manualPanel.hidden = true;
 });
