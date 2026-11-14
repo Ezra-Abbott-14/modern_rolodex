@@ -1,13 +1,10 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="A voice-first virtual rolodex for remembering the people you meet." />
-    <title>Folio — Your people, remembered</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="An AI-assisted personal Rolodex for remembering the people you meet." />
+    <title>Rolodexi — Personal edition</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
 
@@ -18,12 +15,26 @@
           <div class="eyebrow">PERSONAL CONTACT ARCHIVE · EST. 2026</div>
           <h1>Rolodexi</h1>
         </div>
-
         <div class="top-actions">
-          <button class="ghost" id="exportBtn">Export cards</button>
-          <button class="primary" id="addBtn">＋ Add person</button>
+          <button class="ghost" id="exportBtn" type="button">Export cards</button>
+          <button class="primary" id="addBtn" type="button">＋ Add person</button>
         </div>
       </header>
+
+      <section class="ai-capture" aria-labelledby="capture-heading">
+        <div class="capture-heading">
+          <div>
+            <div class="eyebrow">AI MEMORY UPDATE</div>
+            <h2 id="capture-heading">Add what you remember.</h2>
+          </div>
+          <span class="keyboard-hint">⌘ K</span>
+        </div>
+        <textarea id="transcript" rows="3" placeholder="Maya is an artist. We are going to a gallery together on 10/10…" aria-label="New contact memory"></textarea>
+        <div class="capture-footer">
+          <span id="captureHint">Same name merges into one card; Maya and Maya Chen stay separate.</span>
+          <button class="primary" id="generateButton" type="button">Organize with AI ↗</button>
+        </div>
+      </section>
 
       <section class="rolodex" aria-label="Digital Rolodex">
         <aside class="index-panel">
@@ -34,94 +45,51 @@
 
         <section class="machine">
           <div class="machine-top">
-            <span class="machine-brand">
-              ROLODEXI <i>personal edition</i>
-            </span>
-
+            <span class="machine-brand">ROLODEXI <i>personal edition</i></span>
             <label class="search">
               <span aria-hidden="true">⌕</span>
               <input id="search" type="search" placeholder="Find a person..." />
             </label>
-
             <span class="count" id="count" aria-live="polite"></span>
           </div>
-          <span class="keyboard-hint">⌘ K</span>
-        </div>
-        <div class="voice-row">
-          <button class="record-button" id="recordButton" type="button" aria-label="Start voice capture">
-            <span class="mic-icon" aria-hidden="true">⌕</span>
-            <span class="record-label">Tap to speak</span>
-            <span class="record-wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
-          </button>
-          <div class="transcript-wrap">
-            <textarea id="transcript" rows="3" placeholder="“I met Maya at the Saturday market. She has a bright red bob and told me about her first gallery show...”" aria-label="Person details"></textarea>
-            <div class="capture-footer">
-              <span id="captureHint">AI will match this note to an existing person or create a new profile.</span>
-              <button class="generate-button" id="generateButton" type="button">Generate profile <span>↗</span></button>
-            </div>
+
+          <div class="deck-window" id="deckWindow">
+            <div class="card-stack" id="cardStack"></div>
+            <div class="spindle" aria-hidden="true"><span></span><b></b></div>
+          </div>
+
+          <div class="deck-controls">
+            <button class="flip" id="prevBtn" type="button">← Previous</button>
+            <div class="deck-position" id="position" aria-live="polite"></div>
+            <button class="flip" id="nextBtn" type="button">Next →</button>
           </div>
         </section>
       </section>
 
-      <p class="footer-note">
-        A small place for the people worth remembering — where you met, what
-        they care about, and the thread to pick up next time.
-      </p>
+      <p class="footer-note">A small place for the people worth remembering — where you met, what they care about, and the thread to pick up next time.</p>
     </main>
 
     <dialog id="personDialog">
       <form class="modal" id="personForm">
         <h2>Add a new card</h2>
-
         <div class="form-grid">
-          <label>
-            Full name
-            <input name="name" required placeholder="e.g. Avery Chen" />
-          </label>
-
-          <label>
-            Role / company
-            <input name="role" placeholder="e.g. Designer at..." />
-          </label>
-
-          <label>
-            Where you met
-            <input name="met" placeholder="e.g. Saturday market" />
-          </label>
-
-          <label>
-            City
-            <input name="city" placeholder="e.g. Portland, OR" />
-          </label>
-
-          <label>
-            Phone
-            <input name="phone" placeholder="(555) 123-4567" />
-          </label>
-
-          <label>
-            Email
-            <input name="email" type="email" placeholder="hello@example.com" />
-          </label>
-
-          <label class="field full">
-            Notes
-            <textarea name="notes" placeholder="What should you remember for next time?"></textarea>
-          </label>
-
-          <label class="field full">
-            Tags
-            <input name="tags" placeholder="design, coffee, local (comma separated)" />
-          </label>
+          <label>Full name<input name="name" required placeholder="e.g. Avery Chen" /></label>
+          <label>Role / company<input name="role" placeholder="e.g. Designer at..." /></label>
+          <label>Where you met<input name="met" placeholder="e.g. Saturday market" /></label>
+          <label>City<input name="city" placeholder="e.g. Portland, OR" /></label>
+          <label>Phone<input name="phone" placeholder="(555) 123-4567" /></label>
+          <label>Email<input name="email" type="email" placeholder="hello@example.com" /></label>
+          <label class="field full">Notes<textarea name="notes" placeholder="What should you remember for next time?"></textarea></label>
+          <label class="field full">Tags<input name="tags" placeholder="design, coffee, local (comma separated)" /></label>
         </div>
-
         <div class="modal-actions">
           <button type="button" class="ghost" id="cancelBtn">Cancel</button>
-          <button class="primary">Save card</button>
+          <button class="primary" type="submit">Save card</button>
         </div>
       </form>
     </dialog>
 
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
     <script src="app.js"></script>
   </body>
 </html>

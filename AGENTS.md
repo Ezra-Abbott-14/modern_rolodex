@@ -7,13 +7,13 @@
 - Stack: browser HTML/CSS/JavaScript plus a small Python standard-library API server.
 - Run: `export OPENAI_API_KEY="..." && python3 server.py`, then open `http://localhost:8000`.
 - Test: syntax-check Python, exercise `/api/merge`, then run the browser flow manually.
-- Done: typed capture, manual entry, search, filters, local storage, local fallback merge, AI API scaffold.
-- Next: exact-name AI matching, API integration test, business-card capture only if time remains, demo polish.
+- Done: Rolodexi deck, typed capture, manual entry, search, local storage, exact-name fallback merge, guarded AI API, tests.
+- Next: live OpenAI-key test, business-card capture only if time remains, demo polish.
 
 ## Working rules
 
 - Build quickly; explain only when asked.
-- Keep Maya and Maya Chen separate; merge only when the AI has strong identity evidence.
+- Keep Maya and Maya Chen separate; merge only exact normalized names.
 - Do not add features outside the agreed MVP without asking.
 - Run changed code after every step and test empty input, bad input, and duplicate submission.
 - Test unit logic, API integration, and the complete browser demo before calling it done.

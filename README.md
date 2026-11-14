@@ -22,5 +22,6 @@ deduplicated facts, and the new information from the note.
 3. Open [http://localhost:8000](http://localhost:8000).
 
 When you add a note, the app sends the note and existing contact summaries to
-`POST /api/merge`. The AI can match “Maya” to “Maya Chen” and update the same card.
+`POST /api/merge`. Exact names merge into one card: two “Maya” notes merge, while
+“Maya” and “Maya Chen” remain separate.
 If the server or AI is unavailable, the browser uses its local merge fallback.
