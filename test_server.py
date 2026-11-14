@@ -118,6 +118,28 @@ class HttpTests(unittest.TestCase):
                 urlopen(self.base + path)
             self.assertEqual(caught.exception.code, 404)
 
+    def test_live_server_preflight_and_response(self):
+        for origin in ('http://localhost:5500', 'http://127.0.0.1:5500'):
+            request = Request(self.base + '/api/profile', method='OPTIONS', headers={'Origin':origin, 'Access-Control-Request-Method':'POST', 'Access-Control-Request-Headers':'content-type'})
+            with urlopen(request) as response:
+                self.assertEqual(response.status,204)
+                self.assertEqual(response.headers.get('Access-Control-Allow-Origin'),origin)
+            with patch('server.call_gemini',return_value=example_profile()):
+                request = Request(self.base + '/api/profile', data=json.dumps({'note':'Jamie Rivera'}).encode(), headers={'Origin':origin,'Content-Type':'application/json'})
+                with urlopen(request) as response:
+                    self.assertEqual(response.headers.get('Access-Control-Allow-Origin'),origin)
+                    self.assertEqual(json.load(response)['profile']['name'],'Jamie Rivera')
+
+    def test_untrusted_origins_are_rejected_before_gemini(self):
+        for origin in ('https://example.com','null','http://localhost:5500.evil.example'):
+            with patch('server.call_gemini') as upstream:
+                request=Request(self.base + '/api/profile',data=b'{"note":"Jamie"}',headers={'Origin':origin})
+                with self.assertRaises(HTTPError) as caught:
+                    urlopen(request)
+                self.assertEqual(caught.exception.code,403)
+                self.assertIsNone(caught.exception.headers.get('Access-Control-Allow-Origin'))
+                upstream.assert_not_called()
+
 
 if __name__ == '__main__':
     unittest.main()

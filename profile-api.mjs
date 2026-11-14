@@ -3,6 +3,11 @@ export async function extractProfile(note, fetcher = globalThis.fetch, page = gl
   const wrongServer = () => Object.assign(new Error(
     'This page is a static preview. Open http://localhost:8000 instead of Live Server (port 5500). Your note has not been cleared.'
   ), {code: 'WRONG_SERVER'});
+  if (page?.protocol === 'file:') throw wrongServer();
+  // VS Code Live Server serves the UI only. Route its API call to Python.
+  const liveServer = page?.protocol === 'http:' && page.port === '5500'
+    && ['localhost', '127.0.0.1'].includes(page.hostname);
+  const endpoint = liveServer ? `http://${page.hostname}:8000/api/profile` : '/api/profile';
   const staticPreview = page?.protocol === 'http:' && page?.port && page.port !== '8000';
   const endpoint = page?.protocol === 'file:' ? 'http://localhost:8000/api/profile' : '/api/profile';
   if (staticPreview) throw wrongServer();

@@ -71,12 +71,30 @@ Keep that terminal running while using the website. Closing it stops the backend
 even if the website is still visible in a browser tab. If a traceback follows the
 startup message, the server did not start successfully; see troubleshooting below.
 
-### 4. Open the full app, not a static preview
+### 4. Open the app (Python server or supported Live Server preview)
 
 In Chrome or Edge, open [http://localhost:8000/](http://localhost:8000/).
 For this demo, consistently use that exact hostname and port.
 
 VS Code's **Go Live / Live Server** normally opens `http://127.0.0.1:5500/index.html`.
+That static server does not execute `server.py`, but extraction now supports this
+development workflow: keep Python running on port 8000, then use Live Server on 5500.
+The Extract button explicitly sends the request to `http://127.0.0.1:8000/api/profile`.
+For `http://localhost:5500`, it uses `http://localhost:8000/api/profile`.
+
+Python allows these two exact preview origins and answers the browser's OPTIONS
+preflight. This is restricted CORS (cross-origin resource sharing); unrelated websites
+are not allowed to spend your Gemini quota through the local backend.
+The API key still stays in Python. Live Server alone is not enough: both processes
+must be running. After updating the code, restart Python and reload the preview tab.
+Live Server may automatically reload the page when any project file is edited,
+including documentation. Finish editing before a demo, or use the Python-served page
+on port 8000 to avoid that development-server refresh resetting an open form.
+
+This fixes the reported backend-unreachable error at `127.0.0.1:5500/index.html`.
+Previously, the request incorrectly targeted Live Server's own `/api/profile`.
+Other preview ports are not automatically forwarded. For a custom Python port, open
+the Python-served page at that port. Direct `file://` opening is unsupported.
 That server can display the HTML/CSS/JavaScript, but it does not execute `server.py`.
 The Extract button requests `/api/profile` on the same server as the page. On port
 5500 it reaches Live Server, which has no Gemini endpoint. A directly opened `index.html`
@@ -148,7 +166,7 @@ window or clearing site data may remove its saved cards.
 | Symptom | Meaning and next action |
 | --- | --- |
 | Page works, but extraction says to open port 8000 | Check the address bar. Open `http://localhost:8000/`, not Live Server on port 5500. Copy your note before switching tabs. |
-| Backend could not be reached | Keep the Python terminal open. Start `.\start.ps1`, check `/api/health`, and retry from the same app URL. A static page can remain visible after Python stops. |
+| Backend could not be reached | Keep Python running with `.\start.ps1`, check `http://localhost:8000/api/health`, and reload the browser tab. Live Server on 5500 now forwards extraction to 8000, but cannot start Python for you. |
 | Browser cannot open localhost:8000 | Python is stopped or failed to start. Read the terminal traceback; a printed startup URL alone is not enough if followed by an error. |
 | `configured: false` or Gemini is not configured | Check that the file is named `.env` exactly, is next to `server.py`, and contains a nonempty `GEMINI_API_KEY`. Restart the server. |
 | Access denied, rejected request, or unavailable model | Check the key/project/model in Google AI Studio. The live-tested configuration is `gemini-3.1-flash-lite`; account access can differ. |
@@ -179,7 +197,12 @@ that triggered it, and the relevant terminal error. Never include the API key or
 | `test_server.py` | Python unit and HTTP integration tests with simulated upstream responses. |
 | `test_profile_api.mjs` | JavaScript tests for valid results, wrong servers, invalid data, and connection errors. |
 | `browser_fixture.py` | Explicit test-only simulated Gemini server on port 8001. |
+| `DEVELOPMENT_LOG.md` | Dated major-update entries: findings, changed files, decisions/rationale, test evidence, limitations, and open questions/answers. |
 
+The browser's speech-recognition service transcribes the voice; it needs browser support,
+microphone permission, and generally internet access. Unsupported browsers can still use typed notes.
+The browser sends the text to Python's `POST /api/profile` (explicit port 8000 when
+using the supported Live Server preview). Python sends the note to Gemini
 The browser sends the typed note to Python's `POST /api/profile`. Python sends the note to Gemini
 over HTTPS, requests a JSON schema, validates the result, and returns fields for review.
 Unknown details stay empty. Gender is never inferred from pronouns, name, voice, or appearance.
@@ -196,7 +219,7 @@ The server binds to this computer only and rejects duplicate listeners on the sa
 
 - `python -m unittest -v test_server.py` or Windows `./start.ps1 -Test`: unit and HTTP integration tests.
 - `node --check app.js`: JavaScript syntax check.
-- `node --test test_profile_api.mjs`: seven JavaScript request/response tests, including
+- `node --test test_profile_api.mjs`: nine JavaScript request/response tests, including
   the Live Server HTML error that caused the reported failure. No npm packages needed.
 - `python browser_fixture.py`: test-only server at http://localhost:8001 with simulated Gemini responses.
   The normal app never enables this fixture. Do not present it as a real AI demo.
@@ -206,14 +229,24 @@ The server binds to this computer only and rejects duplicate listeners on the sa
 - To repeat the browser checks against the fixture, use notes containing Jamie Rivera and Casey Morgan;
   `unnamed` triggers a missing-name result. Only those test responses are supplied by the fixture.
 
-The Python suite currently has 11 tests. Tests simulate Gemini to make edge cases
+The Python suite currently has 13 tests, including Live Server preflight/response
+headers and rejection of untrusted browser origins. Tests simulate Gemini to make edge cases
 repeatable without spending API quota; they do not prove that Google's live API works.
 The frontend suite sends notes through a supplied test transport to check error
 classification and data handling. Browser tests are separate scripted interactions
 that check the actual page, form, save behavior, and reload persistence.
 After implementation changes, run both suites, then use the browser for the full flow.
-For this error fix, also reproduce extraction on port 5500: it should preserve the note
-and display the correct-port message and recovery link instead of the old generic error.
+For the current error fix, run Python on 8000 and repeat extraction from port 5500:
+it should now return real profile fields rather than requiring a URL switch. Stop
+Python to check the recovery message; the entered note must remain intact.
+
+## Development notes and open questions
+
+Read `DEVELOPMENT_LOG.md` for the evidence and decisions behind each major update.
+Each entry records the request, affected branch/files, root-cause findings, concise
+decision rationale, exact verification, unfinished work, and questions with answers
+or a pending status. Update the entry as verification proceeds rather than describing
+unfinished checks as successful. Never put keys or private recordings in these logs.
 
 The Street Valley scene is original code art inspired by the team's pixel-farming-game
 references. It does not bundle copied game sprites. Adding a contact syncs that person

@@ -33,6 +33,22 @@ test('opening a file directly uses the local backend endpoint', async () => {
 test('network failure gives startup instructions', async () => {
   await assert.rejects(extractProfile('Jamie', async()=>{throw new TypeError('Failed to fetch');}), /Keep the terminal running/);
 });
+
+test('Live Server calls the Python backend instead of its static server', async () => {
+  for (const hostname of ['localhost', '127.0.0.1']) {
+    const fetcher = async url => {
+      assert.equal(url, `http://${hostname}:8000/api/profile`);
+      return reply({profile});
+    };
+    assert.deepEqual(await extractProfile('Jamie', fetcher, {protocol:'http:',hostname,port:'5500'}), profile);
+  }
+});
+
+test('other hosts and custom backend ports stay same-origin', async () => {
+  for (const page of [{protocol:'http:',hostname:'localhost',port:'9000'}, {protocol:'https:',hostname:'example.com',port:''}]) {
+    await extractProfile('Jamie', async url => {assert.equal(url,'/api/profile');return reply({profile});}, page);
+  }
+});
 test('Gemini errors remain visible', async () => {
   await assert.rejects(extractProfile('Jamie', async()=>reply({error:'Gemini quota is exhausted.'},503)), /Gemini quota/);
 });
