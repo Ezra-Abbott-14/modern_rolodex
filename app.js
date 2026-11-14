@@ -1,6 +1,19 @@
 import { initStreetValleyWorld } from './street_valley_world.js';
 import { extractProfile, populateProfileForm } from './profile-api.mjs';
 
+const introLoader = document.querySelector('#introLoader');
+if (introLoader) {
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const introDuration = reducedMotion ? 250 : 5300;
+  window.setTimeout(() => {
+    introLoader.classList.add('is-done');
+    introLoader.setAttribute('aria-hidden', 'true');
+    document.body.classList.add('animation-done');
+    document.body.classList.remove('animation-lock');
+    window.setTimeout(() => introLoader.remove(), 550);
+  }, introDuration);
+}
+
 const seed = [
   {
     id: 1,
@@ -356,11 +369,17 @@ function render() {
 function moveDeck(amount) {
   if (!visiblePeople.length) return;
 
-  deckIndex = Math.max(0, Math.min(
-    deckIndex + amount,
-    visiblePeople.length - 1
-  ));
+  const nextIndex = Math.max(0, Math.min(deckIndex + amount, visiblePeople.length - 1));
+  if (nextIndex === deckIndex) return;
+
+  const stack = $('#cardStack');
+  const flipClass = amount > 0 ? 'flip-next' : 'flip-prev';
+  stack.classList.remove('flip-next', 'flip-prev');
+  void stack.offsetWidth;
+  stack.classList.add(flipClass);
+  deckIndex = nextIndex;
   renderDeck();
+  window.setTimeout(() => stack.classList.remove(flipClass), 620);
 }
 
 function buildPerson(form) {
@@ -422,25 +441,27 @@ $('#deckWindow').addEventListener('wheel', event => {
 
 document.addEventListener('keydown', event => {
   if ($('#personDialog').open || $('#updateDialog').open || /INPUT|TEXTAREA|SELECT/.test(event.target.tagName)) return;
-  if (event.key === 'ArrowRight') moveDeck(1);
-  if (event.key === 'ArrowLeft') moveDeck(-1);
+  if (['ArrowRight', 'ArrowDown', 'ArrowLeft', 'ArrowUp'].includes(event.key)) {
+    event.preventDefault();
+    moveDeck(['ArrowRight', 'ArrowDown'].includes(event.key) ? 1 : -1);
+  }
 });
 
 $('#deckWindow').addEventListener('pointerdown', event => {
-  dragStart = event.clientX;
+  dragStart = event.clientY;
 });
 
 $('#deckWindow').addEventListener('pointerup', event => {
   if (dragStart === null) return;
 
-  const distance = event.clientX - dragStart;
+  const distance = event.clientY - dragStart;
   if (Math.abs(distance) > 45) moveDeck(distance < 0 ? 1 : -1);
   dragStart = null;
 });
 
 $('#addBtn').onclick = () => {
   $('#personForm').reset();
-  setCaptureStatus('Type a note, extract the details, then review and save below.');
+  setCaptureStatus('Add a note, organize the details, then review and save below.');
   $('#personDialog').showModal();
 };
 
@@ -488,14 +509,14 @@ function setCaptureStatus(message, error = false) {
 $('#generateBtn').onclick = async () => {
   if (extracting) return;
   const note = $('#meetingNote').value.trim();
-  if (!note) return setCaptureStatus('Type a note before extracting a profile.', true);
+  if (!note) return setCaptureStatus('Add a note before organizing it.', true);
   extracting = true;
   $('#cancelBtn').disabled = true;
   $('#generateBtn').disabled = true;
   $('#meetingNote').readOnly = true;
   $('#personForm .modal-actions button:last-child').disabled = true;
   $('#generateBtn').textContent = 'Extracting…';
-  setCaptureStatus('Finding the details in your memory…');
+  setCaptureStatus('Organizing your note…');
   try {
     const profile = await extractProfile(note);
     populateProfileForm($('#personForm'), profile);
@@ -515,7 +536,7 @@ $('#generateBtn').onclick = async () => {
     $('#generateBtn').disabled = false;
     $('#meetingNote').readOnly = false;
     $('#personForm .modal-actions button:last-child').disabled = false;
-    $('#generateBtn').textContent = 'Extract profile';
+    $('#generateBtn').textContent = 'Organize note';
   }
 };
 

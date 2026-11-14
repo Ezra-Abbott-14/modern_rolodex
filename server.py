@@ -1,8 +1,10 @@
 """Gemini extraction and secured Flask/Waitress server entry point."""
 import json
+import logging
 import os
 import re
 import socket
+import ssl
 from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
@@ -74,8 +76,25 @@ def call_gemini(note):
                     404: 'The configured Gemini model is unavailable. Update GEMINI_MODEL.',
                     429: 'Gemini quota is exhausted or busy. Wait briefly and try again.'}
         raise RuntimeError(messages.get(error.code, 'Gemini is temporarily unavailable. Please try again.')) from None
-    except (URLError, TimeoutError, socket.timeout):
-        raise RuntimeError('Could not reach Gemini. Check the internet connection and try again.') from None
+    except (URLError, TimeoutError, socket.timeout) as error:
+        reason = error.reason if isinstance(error, URLError) else error
+        # Log only error class/numeric codes: exception text can contain proxy
+        # credentials or other private network configuration.
+        logging.getLogger(__name__).warning(
+            'Gemini connection failed: type=%s errno=%s winerror=%s',
+            type(reason).__name__, getattr(reason, 'errno', None),
+            getattr(reason, 'winerror', None))
+        if isinstance(reason, PermissionError) or getattr(reason, 'winerror', None) == 10013:
+            message = 'The Python backend is blocked from connecting to Gemini. Restart ./start.ps1 in a normal terminal with internet access; check Python network permissions. Your note is still here.'
+        elif isinstance(reason, socket.gaierror):
+            message = 'The Python backend could not resolve Gemini’s address. Check the backend machine’s internet/DNS connection, then retry. Your note is still here.'
+        elif isinstance(reason, ssl.SSLError):
+            message = 'The Python backend could not establish a secure connection to Gemini. Check the server’s certificates or network proxy; do not disable certificate verification. Your note is still here.'
+        elif isinstance(reason, TimeoutError):
+            message = 'Gemini did not respond before the backend timed out. Please retry shortly. Your note is still here.'
+        else:
+            message = 'Could not reach Gemini from the Python backend. Check its internet connection and terminal log, then retry. Your note is still here.'
+        raise RuntimeError(message) from None
     try:
         candidate = payload['candidates'][0]
         if candidate.get('finishReason') != 'STOP':
@@ -92,6 +111,46 @@ def create_app(overrides=None):
     return factory(overrides)
 
 
+    def do_POST(self):
+        if self.path != '/api/profile':
+            return self.send_json(404, {'error': 'Not found'})
+        try:
+            length = int(self.headers.get('Content-Length', '0'))
+            if not 0 < length <= 64000:
+                return self.send_json(413, {'error': 'Please send a short note (up to 8,000 characters).'})
+            body = json.loads(self.rfile.read(length).decode('utf-8'))
+            note = body.get('note') if isinstance(body, dict) else None
+            if not isinstance(note, str) or not note.strip() or len(note) > 8000:
+                return self.send_json(400, {'error': 'Enter a note of 1–8,000 characters about a person.'})
+            self.send_json(200, {'profile': call_gemini(note.strip())})
+        except (ValueError, UnicodeError) as error:
+            self.send_json(400, {'error': str(error) if str(error).startswith(('Please', 'Gemini')) else 'Invalid request. Please try again.'})
+        except RuntimeError as error:
+            self.send_json(503, {'error': str(error)})
+
+    def do_GET(self):
+        if self.path == '/api/health':
+            return self.send_json(200, {'configured': bool(os.environ.get('GEMINI_API_KEY', '').strip())})
+        # Only serve explicit public assets, never secrets, source code, or Git metadata.
+        assets = {'/': ('index.html', 'text/html; charset=utf-8'),
+                  '/index.html': ('index.html', 'text/html; charset=utf-8'),
+                  '/styles.css': ('styles.css', 'text/css; charset=utf-8'),
+                  '/light-theme.css': ('light-theme.css', 'text/css; charset=utf-8'),
+                  '/app.js': ('app.js', 'text/javascript; charset=utf-8'),
+                  '/profile-api.mjs': ('profile-api.mjs', 'text/javascript; charset=utf-8'),
+                  '/street_valley_characters.js': ('street_valley_characters.js', 'text/javascript; charset=utf-8'),
+                  '/street_valley_world.js': ('street_valley_world.js', 'text/javascript; charset=utf-8'),
+                  '/roladexi.jpg': ('roladexi.jpg', 'image/jpeg'),
+                  '/demo-video.mp4': ('demo-video.mp4', 'video/mp4')}
+        asset = assets.get(self.path.split('?', 1)[0])
+        if not asset or not (ROOT / asset[0]).is_file():
+            return self.send_json(404, {'error': 'Not found'})
+        content = (ROOT / asset[0]).read_bytes()
+        self.send_response(200)
+        self.send_header('Content-Type', asset[1])
+        self.send_header('Content-Length', str(len(content)))
+        self.end_headers()
+        self.wfile.write(content)
 def open_listener(host, port):
     listener = socket.socket(socket.AF_INET6 if ':' in host else socket.AF_INET, socket.SOCK_STREAM)
     try:

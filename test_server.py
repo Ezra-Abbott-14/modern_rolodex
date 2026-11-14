@@ -4,7 +4,9 @@ import json
 import os
 import unittest
 from unittest.mock import patch
-from urllib.error import HTTPError
+from urllib.error import HTTPError, URLError
+import socket
+import ssl
 import server
 
 
@@ -16,6 +18,24 @@ def example_profile():
 
 
 class ValidationTests(unittest.TestCase):
+    @patch.dict(os.environ, {'GEMINI_API_KEY': 'test-key'})
+    def test_network_errors_are_actionable_and_logs_redacted(self):
+        for reason, expected in (
+            (PermissionError(13, 'private proxy credentials'), 'blocked'),
+            (socket.gaierror(-2, 'private DNS detail'), 'resolve'),
+            (ssl.SSLCertVerificationError('private certificate detail'), 'secure connection'),
+            (TimeoutError('private timeout detail'), 'timed out'),
+            (ConnectionResetError(10054, 'private network detail'), 'terminal log'),
+        ):
+            with self.subTest(error=type(reason).__name__):
+                with patch('server.urlopen', side_effect=URLError(reason)):
+                    with self.assertLogs('server', level='WARNING') as logs:
+                        with self.assertRaisesRegex(RuntimeError, expected) as raised:
+                            server.call_gemini('Fictional Jamie')
+                self.assertNotIn('private', str(raised.exception))
+                self.assertNotIn('private', ''.join(logs.output))
+                self.assertNotIn('test-key', ''.join(logs.output))
+
     def test_valid_profile(self):
         self.assertEqual(server.validate_profile(example_profile())['name'], 'Jamie Rivera')
 
@@ -86,7 +106,7 @@ class HttpTests(unittest.TestCase):
             self.assertEqual(mocked.call_count, 2)
 
     def test_assets_and_secret_paths(self):
-        for path in ('/', '/app.js', '/styles.css', '/profile-api.mjs', '/street_valley_world.js', '/street_valley_characters.js'):
+        for path in ('/', '/app.js', '/styles.css', '/light-theme.css', '/profile-api.mjs', '/street_valley_world.js', '/street_valley_characters.js'):
             with self.client.get(path) as response:
                 self.assertEqual(response.status_code, 200)
         for path in ('/.env', '/.git/config', '/server.py', '/test_server.py', '/../.env', '/requirements.txt'):

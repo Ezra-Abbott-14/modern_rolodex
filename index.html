@@ -3,18 +3,26 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="An AI-powered personal Rolodex for remembering the people you meet." />
+    <meta name="description" content="A considered personal Rolodex for remembering the people you meet." />
     <title>Rolodexi</title>
     <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="light-theme.css" />
   </head>
 
-  <body>
+  <body class="ma-ui animation-lock">
+    <section class="intro" id="introLoader" role="status" aria-label="Loading Rolodexi">
+      <div class="wordmark" aria-label="Rolodexi">
+        <span>R</span><span>O</span><span>L</span><span>O</span><span>D</span><span>E</span><span>X</span><span>I</span>
+      </div>
+      <p class="intro-note">A living directory for the people, places, and details worth returning to.</p>
+    </section>
+
     <main class="app">
-      <header class="topbar">
-        <div>
-          <div class="eyebrow">PERSONAL CONTACT ARCHIVE · EST. 2026</div>
-          <h1>Rolodexi <span class="title-note">personal edition</span></h1>
-        </div>
+      <header class="topbar" id="siteNav">
+        <a class="global-brand" href="#rolodexSection" aria-label="Rolodexi home">
+          <span class="eyebrow">PERSONAL CONTACT ARCHIVE · EST. 2026</span>
+          <h1><span class="brand-initial">R</span>olodexi <span class="title-note">personal edition</span></h1>
+        </a>
 
         <div class="top-actions">
           <button class="ghost" id="logoutBtn" type="button" hidden>Sign out</button>
@@ -24,10 +32,14 @@
         </div>
       </header>
 
-      <section class="rolodex" aria-label="Digital Rolodex">
+      <section class="editorial-hero editorial-hero-mark-only" id="top" aria-label="Rolodexi introduction">
+        <div class="editorial-hero-wordmark" aria-hidden="true"><span>R</span>OLODEXI</div>
+      </section>
+
+      <section class="rolodex" id="rolodexSection" aria-label="Digital Rolodex">
         <aside class="index-panel">
           <nav class="index" id="index" aria-label="Last name index"></nav>
-          <div class="index-hint">Scroll the deck<br />or use ← →</div>
+          <div class="index-hint">Scroll the deck<br />or use ↑ ↓</div>
         </aside>
 
         <section class="machine">
@@ -59,9 +71,9 @@
 
           <div class="deck-controls">
             <span class="control-prong" aria-hidden="true"></span>
-            <button class="flip" id="prevBtn">← Previous</button>
+            <button class="flip" id="prevBtn">↑ Previous</button>
             <div class="deck-position" id="position" aria-live="polite"></div>
-            <button class="flip" id="nextBtn">Next →</button>
+            <button class="flip" id="nextBtn">Next ↓</button>
             <span class="control-prong" aria-hidden="true"></span>
           </div>
         </section>
@@ -95,13 +107,13 @@
         <h2>Add a new card</h2>
 
         <section class="memory-capture" aria-labelledby="memoryHeading">
-          <div class="eyebrow" id="memoryHeading">YESTERDAY’S ROLODEX. TODAY’S MEMORY.</div>
+          <div class="eyebrow" id="memoryHeading">QUICK CAPTURE</div>
           <label for="meetingNote">Tell us about someone you met</label>
           <textarea id="meetingNote" maxlength="8000" placeholder="Type: Maya is an artist. We are going to a gallery together on 10/10…"></textarea>
           <div class="capture-actions">
-            <button type="button" class="primary" id="generateBtn">Extract profile</button>
+            <button type="button" class="primary" id="generateBtn">Organize note</button>
           </div>
-          <p id="captureStatus" role="status" aria-live="polite">Type a memory, extract the details, then review and save below.</p>
+          <p id="captureStatus" role="status" aria-live="polite">Add a note, organize the details, then review and save below.</p>
           <p id="serviceHelp" hidden><a href="http://localhost:8000/" target="_blank" rel="noopener">Open the full Rolodexi app on port 8000 ↗</a><br>Copy your note first. This opens a new tab.</p>
         </section>
 

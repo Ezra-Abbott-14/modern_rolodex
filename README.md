@@ -2,8 +2,9 @@
 
 iHack 2026: reinvent the physical rolodex for people who struggle to remember new acquaintances.
 Type a short memory, let Gemini extract the details, review the results, and file a new card.
-The wood case, teal index, cream cards, and deck navigation preserve the original Rolodex design.
+The restrained editorial layout, dark deck, cream cards, and simple navigation keep the Rolodex practical and professional.
 Street Valley is a separate animated village below the card deck.
+The current visual pass removes the older prototype's About/Why panels and ticker.
 
 ## Shared devices and secured hosting
 
@@ -21,6 +22,17 @@ The existing developer URL stays loopback-only by default. Do not publish the
 developer's port or change only HOST to expose it without the production settings.
 
 ## Start locally
+
+If Organize note reports **“Could not reach Gemini”** while the page itself loads,
+the browser reached Python but Python could not connect to Google's service.
+On November 14 this was caused by the agent starting Python inside a restricted
+network environment (Windows socket error 10013). Restarting the local backend
+with outbound access restored real Gemini extraction; the key was not the cause.
+When running it yourself, start `./start.ps1` in a normal terminal in this folder
+and keep that terminal open, then use http://localhost:8000. Internet access to
+`https://generativelanguage.googleapis.com` is required. Do not disable TLS checks,
+expose the API key in JavaScript, or run two copies on port 8000. The port-8001
+fixture simulates Gemini and cannot prove the actual upstream connection works.
 
 ### 1. Open a terminal in this project
 
@@ -208,7 +220,7 @@ that triggered it, and the relevant terminal error. Never include the API key or
 | File | Responsibility |
 | --- | --- |
 | `index.html` | Retro layout, deck controls, note input, and review/save form. |
-| `styles.css` | Wood case, teal index, cream cards, responsive layout, and dialog styling. |
+| `styles.css` | Editorial layout, dark deck, cream cards, responsive layout, and dialog styling. |
 | `app.js` | Typed note capture, profile review, exact-name merge/update, card rendering, search/index navigation, and localStorage. |
 | `street_valley_characters.js` | 100 original pixel-villager data definitions with gender, palette, job, favorite place, and walking speed. |
 | `street_valley_world.js` | Code-drawn canvas village where Rolodex contacts and ambient villagers automatically wander. |
@@ -307,7 +319,7 @@ Main contained previously committed conflict markers in `app.js` and `styles.css
 from combining the original Folio grid with the retro deck. Its HTML also replaced
 the deck elements with old capture controls while JavaScript still expected the deck.
 These incompatible fragments were removed rather than carried into the working app.
-The Rolodexi title and AI-powered page description are retained.
+The Rolodexi title and quiet note-organization flow are retained.
 
 The older main-branch `AGENTS.md` described OpenAI and a different capture flow. The
 current implementation keeps Gemini, typed capture, exact normalized-name merging,
@@ -316,3 +328,40 @@ The team’s earlier work remains available in Git history.
 
 The merge is performed on `ezraAiUse2.0` so the integration can be reviewed and tested
 before merging its pull request into `main`. Do not force-push over another teammate’s work.
+
+## November 14 visual review: main + ui_thinking
+
+The current `ui_thinking` working version keeps main's Add/Update/Export, Gemini
+review form, saved cards, search, and Street Valley. It uses the UI branch's
+cream `#e9e8e2`, near-black `#171714`, and acid green `#c8f42c` palette.
+The header's R is green; About/Why links, the green scrolling ticker, and the
+Remember/Why explanatory section have been removed.
+
+All Cards and A–Z form one vertical column with dark letters. Click a letter to
+filter; All Cards restores the complete deck. Next brings a card up from below,
+and Previous returns from above. Wheel down/up, Arrow Down/Up (plus the older
+Left/Right shortcuts), and vertical swipes navigate the deck. The opening R
+animation comes from `ui_thinking` and lasts about 5.3 seconds; operating-system
+reduced-motion preferences skip its movement and the card transitions.
+
+Run `./start.ps1` and open http://localhost:8000. Reload to replay the opening.
+`light-theme.css` must remain in the Flask public-asset allowlist and the Docker
+image's COPY list. Otherwise the Python-hosted page loses its visual layer.
+The extraction handler uses `populateProfileForm` once: it deliberately skips
+optional controls absent from the HTML rather than failing on the hidden
+pronouns field.
+
+Validate with `./start.ps1 -Test`, `node --test test_profile_api.mjs`, and
+`node --check app.js`. For repeatable browser integration checks, run
+`./.venv/Scripts/python.exe browser_fixture.py` and open http://localhost:8001.
+That fixture simulates Gemini; it is never the production app. Try empty input,
+an unnamed person, then a Casey Morgan note; organize, review, save, repeat,
+reload, and search. Verify the count does not grow when saving the same name.
+Also check Add/Cancel, Update/Cancel, All Cards, an empty letter, and both deck
+buttons. For the real app, Gemini still needs the private server-side `.env` key.
+
+Desktop browser verification and 37 automated tests pass. A true narrow-device
+check is still pending: the available browser's requested 390px viewport stayed
+at 1280px. Responsive CSS retains the vertical index and all header actions, but
+requires confirmation on a phone. This visual pass awaits the team's screenshot
+review; AWS hosting and external-device verification remain separate pending work.

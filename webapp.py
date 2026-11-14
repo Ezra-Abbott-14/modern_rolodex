@@ -14,7 +14,7 @@ from werkzeug.exceptions import HTTPException
 from werkzeug.middleware.proxy_fix import ProxyFix
 import server
 
-ASSETS = {'index.html', 'styles.css', 'app.js', 'profile-api.mjs',
+ASSETS = {'index.html', 'styles.css', 'light-theme.css', 'app.js', 'profile-api.mjs',
           'street_valley_world.js', 'street_valley_characters.js', 'roladexi.jpg'}
 PREVIEWS = {'http://localhost:5500', 'http://127.0.0.1:5500'}
 
