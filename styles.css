@@ -535,6 +535,21 @@ textarea {
 }
 
 /* ---------- Responsive layout ---------- */
+.voice-capture { border:1px solid var(--line); padding:17px; margin-bottom:22px; background:#f8edcf; border-radius:10px; }
+.voice-capture .eyebrow { font-size:9px; margin-bottom:13px; }
+.voice-capture textarea { width:100%; margin:8px 0 12px; min-height:110px; }
+.capture-actions { display:flex; flex-wrap:wrap; gap:10px; }
+#captureStatus { margin:14px 0 0; font-size:11px; line-height:1.6; color:var(--teal); }
+#captureStatus.error { color:#943a22; }
+button:disabled { opacity:.5; cursor:default; transform:none; }
+#recordBtn[aria-pressed="true"] { background:var(--rust); color:white; }
+dialog { max-height:90vh; overflow:auto; }
+.contact-card { overflow-y:auto; }
+.card-number { position:relative; bottom:auto; left:auto; margin-top:20px; }
+.memory-details { margin-top:16px; font-size:11px; line-height:1.6; }
+.memory-details p { margin:8px 0; white-space:pre-line; }
+.app-status { color:var(--teal); font-size:11px; text-align:center; }
+
 @media (max-width:820px) {
   .rolodex {
   grid-template-columns:1fr;

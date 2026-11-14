@@ -1,5 +1,4 @@
 """Unit and HTTP integration tests; Gemini is mocked, no key or network needed."""
-import copy
 import io
 import json
 import os

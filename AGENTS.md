@@ -8,15 +8,15 @@
 - Deadline: November 14, 2026, 4 p.m. America/Denver (Rexburg, Idaho).
 - Preserve the main-branch Rolodexi style closely: wood case, teal alphabet index, cream stacked cards, retro typography and navigation.
 - Team knows JavaScript, HTML, CSS, Python, C, C++, C#; explain each implementation step before prioritizing speed.
-- Provider: Google Gemini. API credentials, account quota, deployment target, and final backend choice remain to be confirmed.
+- Provider: Google Gemini; existing Python backend retained. Team must create a key; live model access/quota and deployment target remain unverified.
 
 ## Run, test, and status
-- Existing run command: `python server.py` (or `python3 server.py`); open http://localhost:8000. Python was unavailable in the earlier environment audit.
-- Current server expects OPENAI_API_KEY and optionally OPENAI_MODEL; migrate these to Gemini during approved implementation.
-- Browser app has manual card entry, localStorage, search, alphabet index, deck navigation, and export code; this new version has not been browser-tested in this audit.
-- Backend /api/merge still calls OpenAI; current app.js does not call it. Voice-to-Gemini-to-card flow is unfinished.
-- Syntax check: `node --check app.js`; no automated suite configured yet.
-- Next: confirm key availability and backend/deployment choices, then obtain the team's "go" before implementation.
+- Run: `python server.py` or Windows `./start.ps1`; open http://localhost:8000. Bundled Python was located and used successfully.
+- Copy .env.example to .env and set GEMINI_API_KEY privately; optional GEMINI_MODEL defaults to gemini-3.8-flash. Restart after changes.
+- Implemented: browser dictation, editable note, /api/profile Gemini extraction, profile review/save, required fields, localStorage, and existing deck/search/export.
+- Tests: `python -m unittest -v test_server.py`; `node --check app.js`. `python browser_fixture.py` serves simulated Gemini on port 8001 for browser testing only.
+- Verified: 10 unit/HTTP tests; automated browser assertions for extraction/review/save twice/search/reload, nameless input, and missing-key behavior. Gemini responses were simulated.
+- Next: team creates key, then run actual Gemini and spoken-microphone demo checks; neither is verified yet. Go was granted for implementation.
 
 ## Working rules
 - Do the legwork: run, test, research, and fix issues. Product, design, behavior, and tool decisions belong to the team; batch questions in one message.

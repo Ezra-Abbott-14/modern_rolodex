@@ -127,7 +127,11 @@ let dragStart = null;
 const $ = selector => document.querySelector(selector);
 
 function loadPeople() {
-  return JSON.parse(localStorage.getItem('retro-rolodex') || 'null') || seed;
+  try {
+    const saved = JSON.parse(localStorage.getItem('retro-rolodex') || 'null');
+    if (Array.isArray(saved) && saved.every(person => person && typeof person.name === 'string' && person.name.trim() && Array.isArray(person.tags))) return saved;
+  } catch { /* Recover gracefully from unavailable or corrupted storage. */ }
+  return structuredClone(seed);
 }
 
 function savePeople() {
@@ -168,6 +172,10 @@ function getFilteredPeople() {
       person.met,
       person.city,
       person.notes,
+      person.appearance,
+      person.gender,
+      person.pronouns,
+      ...(person.events || []),
       ...person.tags
     ].join(' ').toLowerCase();
 
@@ -212,7 +220,7 @@ function renderCard(person, position) {
 
   return `
     <article class="contact-card ${stackClass}">
-      <div class="card-tab">${firstLetter}</div>
+      <div class="card-tab">${escapeHtml(firstLetter)}</div>
 
       <div class="card-header">
         <div class="avatar ${getToneClass(person)}">${escapeHtml(person.avatar)}</div>
@@ -249,7 +257,13 @@ function renderCard(person, position) {
       </div>
 
       <div class="tags">${tags}</div>
-      <div class="card-number">CARD ${String(person.id).padStart(2, '0')} · LAST NAME: ${lastName}</div>
+      <div class="memory-details">
+        ${person.appearance ? `<p><span class="label">Appearance</span><br>${escapeHtml(person.appearance)}</p>` : ''}
+        ${person.gender ? `<p><span class="label">Gender</span><br>${escapeHtml(person.gender)}</p>` : ''}
+        ${person.pronouns ? `<p><span class="label">Pronouns</span><br>${escapeHtml(person.pronouns)}</p>` : ''}
+        ${person.events?.length ? `<p><span class="label">Memorable events</span><br>${person.events.map(escapeHtml).join('<br>')}</p>` : ''}
+      </div>
+      <div class="card-number">CARD ${escapeHtml(String(person.id))} · LAST NAME: ${escapeHtml(lastName)}</div>
     </article>`;
 }
 
@@ -260,6 +274,8 @@ function renderDeck() {
     $('#cardStack').innerHTML = '<div class="empty-card">No cards match this stack.<br />Try a different letter or add someone new.</div>';
     $('#count').textContent = '0 cards';
     $('#position').textContent = '';
+    $('#prevBtn').disabled = true;
+    $('#nextBtn').disabled = true;
     return;
   }
 
@@ -316,6 +332,10 @@ function buildPerson(form) {
     phone: form.get('phone') || '—',
     email: form.get('email') || '—',
     notes: form.get('notes') || 'Add a note next time you see them.',
+    appearance: form.get('appearance') || '',
+    gender: form.get('gender') || '',
+    pronouns: form.get('pronouns') || '',
+    events: (form.get('events') || '').split('\n').map(value => value.trim()).filter(Boolean),
     tags,
     avatar: name.split(' ').map(part => part[0]).join('').slice(0, 2).toUpperCase(),
     tone: ['teal', 'rust', 'gold'][people.length % 3]
@@ -348,6 +368,7 @@ $('#deckWindow').addEventListener('wheel', event => {
 }, { passive: false });
 
 document.addEventListener('keydown', event => {
+  if ($('#personDialog').open || /INPUT|TEXTAREA/.test(event.target.tagName)) return;
   if (event.key === 'ArrowRight') moveDeck(1);
   if (event.key === 'ArrowLeft') moveDeck(-1);
 });
@@ -366,24 +387,134 @@ $('#deckWindow').addEventListener('pointerup', event => {
 
 $('#addBtn').onclick = () => {
   $('#personForm').reset();
+  setCaptureStatus('Dictate or type, extract the details, then review and save below.');
   $('#personDialog').showModal();
 };
 
 $('#cancelBtn').onclick = () => $('#personDialog').close();
+$('#personDialog').addEventListener('cancel', event => {
+  if (extracting) event.preventDefault();
+});
 
 $('#personForm').onsubmit = event => {
   event.preventDefault();
 
+  if (extracting) return;
   const person = buildPerson(new FormData(event.target));
+  if (!person.name) return setCaptureStatus('Please enter the person’s name.', true);
+  const previousPeople = [...people];
   people.push(person);
+  try {
+    savePeople();
+  } catch {
+    people = previousPeople;
+    setCaptureStatus('Your browser could not save this card. Export existing cards or free browser storage, then retry.', true);
+    return;
+  }
   activeLetter = 'ALL';
+  $('#search').value = '';
   deckIndex = sortByLastName(people).findIndex(item => item.id === person.id);
 
-  savePeople();
   $('#personDialog').close();
   render();
 };
 
 $('#exportBtn').onclick = exportPeople;
+
+let extracting = false;
+let recognition;
+let listening = false;
+let noteBeforeRecording = '';
+
+function setCaptureStatus(message, error = false) {
+  $('#captureStatus').textContent = message;
+  $('#captureStatus').classList.toggle('error', error);
+}
+
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+if (SpeechRecognition) {
+  recognition = new SpeechRecognition();
+  recognition.lang = 'en-US';
+  recognition.continuous = true;
+  recognition.interimResults = true;
+  recognition.onresult = event => {
+    const words = Array.from(event.results).map(result => result[0].transcript).join(' ');
+    $('#meetingNote').value = [noteBeforeRecording, words].filter(Boolean).join(' ').slice(0, 8000);
+  };
+  recognition.onerror = event => {
+    setCaptureStatus(event.error === 'not-allowed'
+      ? 'Microphone access was denied. Allow it in your browser or type your note.'
+      : 'Dictation stopped. Check your microphone and connection, or type your note.', true);
+  };
+  recognition.onend = () => {
+    listening = false;
+    $('#recordBtn').textContent = '● Dictate a note';
+    $('#recordBtn').setAttribute('aria-pressed', 'false');
+  };
+} else {
+  $('#recordBtn').disabled = true;
+  $('#recordBtn').title = 'Use Chrome or Edge for dictation, or type your note.';
+}
+
+$('#recordBtn').onclick = () => {
+  if (!recognition) return;
+  if (listening) return recognition.stop();
+  noteBeforeRecording = $('#meetingNote').value.trim();
+  try {
+    recognition.start();
+    listening = true;
+    $('#recordBtn').textContent = '■ Stop dictation';
+    $('#recordBtn').setAttribute('aria-pressed', 'true');
+    setCaptureStatus('Listening… tell us their name and the details you want to remember.');
+  } catch {
+    setCaptureStatus('Could not start dictation. Try again or type your note.', true);
+  }
+};
+
+$('#personDialog').addEventListener('close', () => {
+  if (listening) recognition.stop();
+});
+
+$('#generateBtn').onclick = async () => {
+  if (extracting) return;
+  const note = $('#meetingNote').value.trim();
+  if (!note) return setCaptureStatus('Dictate or type a note before extracting a profile.', true);
+  if (listening) recognition.stop();
+  extracting = true;
+  $('#cancelBtn').disabled = true;
+  $('#generateBtn').disabled = true;
+  $('#recordBtn').disabled = true;
+  $('#meetingNote').readOnly = true;
+  $('#personForm .modal-actions button:last-child').disabled = true;
+  $('#generateBtn').textContent = 'Extracting…';
+  setCaptureStatus('Finding the details in your memory…');
+  try {
+    const response = await fetch('/api/profile', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({note}), signal: AbortSignal.timeout(45000)
+    });
+    const payload = await response.json();
+    if (!response.ok) throw new Error(payload.error || 'Extraction failed. Please try again.');
+    const profile = payload.profile;
+    if (!profile || typeof profile.name !== 'string' || !profile.name.trim()) throw new Error('No person was found. Please include their name.');
+    for (const name of ['name', 'role', 'met', 'city', 'phone', 'email', 'notes', 'gender', 'pronouns', 'appearance']) {
+      $('#personForm').elements.namedItem(name).value = profile[name] || '';
+    }
+    $('#personForm').elements.namedItem('events').value = (profile.events || []).join('\n');
+    $('#personForm').elements.namedItem('tags').value = (profile.tags || []).join(', ');
+    setCaptureStatus('Details extracted with Gemini. Review them below, then save your card.');
+  } catch (error) {
+    setCaptureStatus(error.name === 'TimeoutError' ? 'Gemini took too long. Your note is still here; please retry.'
+      : error instanceof TypeError || error instanceof SyntaxError ? 'Could not reach the profile service. Start server.py and open localhost:8000.' : error.message, true);
+  } finally {
+    extracting = false;
+    $('#cancelBtn').disabled = false;
+    $('#generateBtn').disabled = false;
+    $('#recordBtn').disabled = !recognition;
+    $('#meetingNote').readOnly = false;
+    $('#personForm .modal-actions button:last-child').disabled = false;
+    $('#generateBtn').textContent = 'Extract profile';
+  }
+};
 
 render();

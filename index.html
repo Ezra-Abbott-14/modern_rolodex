@@ -65,6 +65,17 @@
       <form class="modal" id="personForm">
         <h2>Add a new card</h2>
 
+        <section class="voice-capture" aria-labelledby="voiceHeading">
+          <div class="eyebrow" id="voiceHeading">YESTERDAY’S ROLODEX. TODAY’S MEMORY.</div>
+          <label for="meetingNote">Tell us about someone you met</label>
+          <textarea id="meetingNote" maxlength="8000" placeholder="I met Jamie Rivera at the hackathon. They wear red glasses and won a robotics contest..."></textarea>
+          <div class="capture-actions">
+            <button type="button" class="ghost" id="recordBtn">● Dictate a note</button>
+            <button type="button" class="primary" id="generateBtn">Extract profile</button>
+          </div>
+          <p id="captureStatus" role="status" aria-live="polite">Dictate or type, extract the details, then review and save below.</p>
+        </section>
+
         <div class="form-grid">
           <label>
             Full name
@@ -99,6 +110,26 @@
           <label class="field full">
             Notes
             <textarea name="notes" placeholder="What should you remember for next time?"></textarea>
+          </label>
+
+          <label class="field full">
+            Appearance
+            <textarea name="appearance" placeholder="Only the description you remember"></textarea>
+          </label>
+
+          <label>
+            Gender (if stated)
+            <input name="gender" />
+          </label>
+
+          <label>
+            Pronouns (if stated)
+            <input name="pronouns" />
+          </label>
+
+          <label class="field full">
+            Memorable events (one per line)
+            <textarea name="events"></textarea>
           </label>
 
           <label class="field full">

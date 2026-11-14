@@ -102,7 +102,7 @@ class RolodexHandler(BaseHTTPRequestHandler):
             return self.send_json(404, {'error': 'Not found'})
         try:
             length = int(self.headers.get('Content-Length', '0'))
-            if not 0 < length <= 30000:
+            if not 0 < length <= 64000:
                 return self.send_json(413, {'error': 'Please send a short note (up to 8,000 characters).'})
             body = json.loads(self.rfile.read(length).decode('utf-8'))
             note = body.get('note') if isinstance(body, dict) else None
