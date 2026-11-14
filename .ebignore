@@ -1,0 +1,16 @@
+.env
+.env.*
+!.env.example
+.git/
+.gitignore
+__pycache__/
+*.pyc
+node_modules/
+test-results/
+database/db_harness.py
+database/test_*.py
+database/README.md
+docs/*
+test_*.py
+test_*.mjs
+browser_fixture.py

@@ -3,6 +3,7 @@ import json
 import os
 import re
 import socket
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
@@ -21,6 +22,78 @@ name: person's name, or empty if not stated. met: where the user met them.
 appearance: description stated. events: memorable events or future plans stated.
 notes: concise faithful summary. tags: up to 5 short topics present in the note.
 If the input is not about a person, return empty fields. Return the required JSON only."""
+
+FIELD_LIMITS = {'name': 255, 'role': 255, 'met': 255, 'city': 255, 'phone': 64,
+                'email': 320, 'gender': 128, 'pronouns': 128, 'notes': 65535,
+                'appearance': 65535}
+_repository = None
+DEV_OWNER_ID = 'dev-user-1'
+
+
+def database_configured():
+    return all(os.environ.get(key, '').strip() for key in ('DB_HOST', 'DB_NAME', 'DB_USER', 'DB_PASSWORD'))
+
+
+def get_repository():
+    global _repository
+    if _repository is None:
+        from database.repository import ContactRepository
+        import mysql.connector
+
+        def connect_database():
+            return mysql.connector.connect(
+                host=os.environ['DB_HOST'].strip(),
+                port=int(os.environ.get('DB_PORT', '3306')),
+                database=os.environ['DB_NAME'].strip(),
+                user=os.environ['DB_USER'].strip(),
+                password=os.environ['DB_PASSWORD'],
+                autocommit=False,
+            )
+
+        _repository = ContactRepository(connect_database)
+    return _repository
+
+
+def reset_repository_for_tests():
+    global _repository
+    _repository = None
+
+
+def json_safe(value):
+    if isinstance(value, datetime):
+        return value.isoformat(timespec='microseconds') + 'Z'
+    if isinstance(value, dict):
+        return {key: json_safe(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [json_safe(item) for item in value]
+    return value
+
+
+def validate_contact_body(body, *, partial=False):
+    if not isinstance(body, dict):
+        raise ValueError('Request body must be a JSON object.')
+    if not partial and not isinstance(body.get('name'), str):
+        raise ValueError('name is required.')
+    profile = {}
+    for field in FIELDS:
+        if field not in body:
+            continue
+        value = body[field]
+        if value is not None and not isinstance(value, str):
+            raise ValueError(f'{field} must be a string or null.')
+        if isinstance(value, str) and len(value) > FIELD_LIMITS[field]:
+            raise ValueError(f'{field} is too long.')
+        profile[field] = value
+    for list_field in ('events', 'tags'):
+        if list_field in body:
+            values = body[list_field]
+            if not isinstance(values, list) or any(not isinstance(value, str) for value in values):
+                raise ValueError(f'{list_field} must be an array of strings.')
+            profile[list_field] = values
+    source_text = body.get('source_text')
+    if source_text is not None and (not isinstance(source_text, str) or len(source_text) > 8000):
+        raise ValueError('source_text must be a string of up to 8,000 characters.')
+    return profile, source_text
 
 
 def load_env():
@@ -92,46 +165,6 @@ def create_app(overrides=None):
     return factory(overrides)
 
 
-    def do_POST(self):
-        if self.path != '/api/profile':
-            return self.send_json(404, {'error': 'Not found'})
-        try:
-            length = int(self.headers.get('Content-Length', '0'))
-            if not 0 < length <= 64000:
-                return self.send_json(413, {'error': 'Please send a short note (up to 8,000 characters).'})
-            body = json.loads(self.rfile.read(length).decode('utf-8'))
-            note = body.get('note') if isinstance(body, dict) else None
-            if not isinstance(note, str) or not note.strip() or len(note) > 8000:
-                return self.send_json(400, {'error': 'Enter a note of 1–8,000 characters about a person.'})
-            self.send_json(200, {'profile': call_gemini(note.strip())})
-        except (ValueError, UnicodeError) as error:
-            self.send_json(400, {'error': str(error) if str(error).startswith(('Please', 'Gemini')) else 'Invalid request. Please try again.'})
-        except RuntimeError as error:
-            self.send_json(503, {'error': str(error)})
-
-    def do_GET(self):
-        if self.path == '/api/health':
-            return self.send_json(200, {'configured': bool(os.environ.get('GEMINI_API_KEY', '').strip())})
-        # Only serve explicit public assets, never secrets, source code, or Git metadata.
-        assets = {'/': ('index.html', 'text/html; charset=utf-8'),
-                  '/index.html': ('index.html', 'text/html; charset=utf-8'),
-                  '/styles.css': ('styles.css', 'text/css; charset=utf-8'),
-                  '/light-theme.css': ('light-theme.css', 'text/css; charset=utf-8'),
-                  '/app.js': ('app.js', 'text/javascript; charset=utf-8'),
-                  '/profile-api.mjs': ('profile-api.mjs', 'text/javascript; charset=utf-8'),
-                  '/street_valley_characters.js': ('street_valley_characters.js', 'text/javascript; charset=utf-8'),
-                  '/street_valley_world.js': ('street_valley_world.js', 'text/javascript; charset=utf-8'),
-                  '/roladexi.jpg': ('roladexi.jpg', 'image/jpeg'),
-                  '/demo-video.mp4': ('demo-video.mp4', 'video/mp4')}
-        asset = assets.get(self.path.split('?', 1)[0])
-        if not asset or not (ROOT / asset[0]).is_file():
-            return self.send_json(404, {'error': 'Not found'})
-        content = (ROOT / asset[0]).read_bytes()
-        self.send_response(200)
-        self.send_header('Content-Type', asset[1])
-        self.send_header('Content-Length', str(len(content)))
-        self.end_headers()
-        self.wfile.write(content)
 def open_listener(host, port):
     listener = socket.socket(socket.AF_INET6 if ':' in host else socket.AF_INET, socket.SOCK_STREAM)
     try:

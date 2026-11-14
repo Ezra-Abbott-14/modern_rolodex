@@ -1,32 +1,23 @@
-# Rolodexi hackathon guidance
+# Rolodexi agent guidance
 
-## Scope and demo
-- Current main: type a short meeting note, extract details with Google Gemini, and create/update a person card for people who struggle to remember acquaintances.
-- Category: "re-innovating yesterday, reimagine a past invention product or idea for today's world."
-- Two-minute demo: introduce the traditional rolodex, enter a memory, extract/review/save a card, find it again, and show its Street Valley connection.
-- Fields: name, explicitly stated gender/pronouns, meeting place, memorable events, and described appearance; never invent missing details.
-- Deadline: November 14, 2026, 4 p.m. America/Denver (Rexburg, Idaho).
-- Preserve main's current retro stacked-card design, blue-purple styling, alphabet navigation, and Street Valley; retain the nine example cards and saved contacts.
-- Team knows JavaScript, HTML, CSS, Python, C, C++, C#; explain each implementation step before prioritizing speed.
-- Provider: Gemini; Flask/Waitress backend. Key remains server-side. AWS teammate is preparing hosting/RDS; provisioning and public HTTPS verification are explicitly deferred.
+## Product and demo
+- Rolodexi turns a short meeting note into a searchable contact card for people who want to remember acquaintances.
+- Two-minute demo: introduce the modern rolodex, enter a memory, extract/review/save a card, reload/find it, and show Street Valley.
+- Preserve the existing retro stacked-card design, animations, alphabet navigation, and Street Valley.
+- Gemini extracts only explicitly stated facts; never infer missing gender, pronouns, appearance, or events.
 
-## Run, test, and status
-- Setup: `./setup.ps1` (or virtualenv + pip install -r requirements.txt). Run `./start.ps1` or activated-venv `python server.py`; local URL http://localhost:8000.
-- Copy .env.example to .env and set GEMINI_API_KEY privately; optional GEMINI_MODEL defaults to gemini-3.1-flash-lite; output limit 2,048 tokens. Restart after changes.
-- Implemented: typed notes, Gemini extraction, optional-field-safe review, exact-name merge, update dialog, localStorage, deck/search/export, and Street Valley.
-- Tests: `./start.ps1 -Test` / virtualenv `python -m unittest discover -v -p 'test_*.py'` (25); `node --test test_profile_api.mjs` (12); syntax-check runtime JS. Fixture is test-only on 8001.
-- Verified: live Gemini extraction/review/save/reload/search on Python port 8000 and supported Live Server port 5500; Python must stay running on 8000 for preview extraction.
-- Verified main repair: nine fresh examples; Add/cancel/manual save, same-name merge, Update, search/index/navigation, export, village pause/resume, real Gemini save/reload. Dictation is not present in current main.
-- Hosted mode requires HTTPS PUBLIC_ORIGIN, Gemini key, DEMO_ACCESS_CODE and SESSION_SECRET; one process/replica only. See DEPLOYMENT.md for proxy trust, secrets, limits, and pending second-device checks. RDS is not connected by this change.
+## Architecture and status
+- Flask/Waitress serves the app; Gemini is server-side; contacts persist in MySQL/RDS through `database/repository.py`.
+- MVP uses a temporary fixed owner `dev-user-1`; real auth and sharing are not complete.
+- Meeting source text is stored separately with a 30-day expiry field; automatic deletion is not implemented yet.
+- Local setup: copy `.env.example` to `.env`, install `requirements.txt`, run `python server.py` at `http://localhost:8000`.
+- Configure `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`; run `python database/db_harness.py migrate` before first use.
 
 ## Working rules
-- Do the legwork: run, test, research, and fix issues. Product, design, behavior, and tool decisions belong to the team; batch questions in one message.
-- Choose small implementation details and explain those choices. Build only requested features and build them well.
-- Keep README.md explicit and detailed: exact commands, expected results, architecture, configuration, troubleshooting, and verified limitations; keep AGENTS.md under 40 lines.
-- For every major update, append DEVELOPMENT_LOG.md: date/branch, request, findings, changed files, key decisions with concise rationale, tests/results, limitations, next steps, and open questions with status/answers. Update it as work progresses; never log secrets, raw private notes/audio, or private internal reasoning.
-- After each change, run the affected part and confirm its behavior. Open browser apps and use them; operate non-browser apps directly.
-- Once the complete flow exists, run it start to finish as a person would, and repeat after later changes; claim completion only after observing it work.
-- Test logic with unit tests, connections with integration tests, and the full flow manually and through automated end-to-end tests; cover empty input, wrong input, and doing it twice.
-- Commit each working step clearly; never commit passwords or API keys. Keep API keys on the backend and prevent serving secret files.
-- Report broken or skipped work before what works. Explain each step in a few sentences: what, why, and one point the team can explain to a judge.
-- On "demo check", run the entire demo like a judge, fix failures, and provide a five-line demo script.
+- Read `README.md`, `docs/`, and relevant tests before editing. Keep documentation truthful and update it when behavior changes.
+- Database work owns schema, migrations, repository behavior, persistence routes, and database tests. Ask before changing unrelated UI/API behavior.
+- Do the legwork: run changed code, unit/integration tests, and a full end-to-end flow. Cover empty input, wrong input, and doing it twice.
+- Ask a review subagent to argue about risky verification/design decisions and reconcile disagreements before proceeding.
+- Never commit passwords, API keys, private notes, audio, or `.env`; keep secrets server-side.
+- Commit each working step with a clear message. Report broken or skipped work before what works.
+- On `demo check`, run the whole judge flow, fix failures, and provide a five-line demo script.

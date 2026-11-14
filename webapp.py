@@ -6,7 +6,7 @@ import secrets
 import threading
 import time
 from collections import defaultdict, deque
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 from urllib.parse import urlsplit
 
 from flask import Flask, jsonify, redirect, render_template, request, send_from_directory, session, Response
@@ -138,7 +138,7 @@ def create_app(overrides=None):
             return fail('Development mode is available on this computer only.', 403)
         if production and request.path != '/api/health' and not request.is_secure:
             return redirect(app.config['PUBLIC_ORIGIN'] + request.path, code=308)
-        if request.method in ('POST', 'OPTIONS') and not origin_allowed():
+        if request.method in ('POST', 'PATCH', 'OPTIONS') and not origin_allowed():
             return fail('This website cannot use the profile service.', 403)
         if request.path in ('/api/health', '/login') or request.method == 'OPTIONS':
             return None
@@ -148,7 +148,7 @@ def create_app(overrides=None):
             # Login styling is public, but the app/assets are gated.
             if request.path != '/styles.css':
                 return redirect('/login')
-        if request.method == 'POST' and auth:
+        if request.method in ('POST', 'PATCH') and auth:
             supplied = request.headers.get('X-CSRF-Token', '')
             if not supplied or not hmac.compare_digest(supplied, session.get('csrf', '')):
                 return fail('Refresh the page and retry this request.', 403, 'CSRF_FAILED')
@@ -166,7 +166,7 @@ def create_app(overrides=None):
         if not production and not auth and request.headers.get('Origin') in PREVIEWS:
             response.headers['Access-Control-Allow-Origin'] = request.headers['Origin']
             response.headers['Vary'] = 'Origin, Cookie'
-            response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
+            response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PATCH, OPTIONS'
             response.headers['Access-Control-Allow-Headers'] = 'Content-Type, X-CSRF-Token'
         return response
 
@@ -214,6 +214,70 @@ def create_app(overrides=None):
     @app.get('/api/health')
     def health():
         return jsonify({'status':'ok'} if production else {'status':'ok', 'configured':bool(os.environ.get('GEMINI_API_KEY', '').strip())})
+
+    def owner_id():
+        # Temporary MVP owner until the auth service supplies a stable user id.
+        return server.DEV_OWNER_ID
+
+    def repository():
+        if not server.database_configured():
+            raise RuntimeError('Database is not configured.')
+        return server.get_repository()
+
+    @app.get('/api/contacts')
+    def contacts():
+        try:
+            return jsonify({'contacts': server.json_safe(repository().list_contacts(owner_id()))})
+        except Exception:
+            app.logger.error('Contact list failed')
+            return fail('Database is temporarily unavailable.', 503, 'DATABASE_UNAVAILABLE')
+
+    @app.get('/api/contacts/<contact_id>')
+    def contact(contact_id):
+        try:
+            value = repository().get_contact(owner_id(), contact_id)
+            if value is None:
+                return fail('Contact not found.', 404, 'CONTACT_NOT_FOUND')
+            return jsonify({'contact': server.json_safe(value)})
+        except Exception:
+            app.logger.error('Contact lookup failed')
+            return fail('Database is temporarily unavailable.', 503, 'DATABASE_UNAVAILABLE')
+
+    @app.post('/api/contacts')
+    def create_contact():
+        try:
+            body = request.get_json(silent=True)
+            profile, source_text = server.validate_contact_body(body)
+            value = repository().create_contact(
+                owner_id(), profile, source_text=source_text,
+                provider='gemini' if source_text else None,
+                model=os.environ.get('GEMINI_MODEL') if source_text else None,
+                source_expires_at=datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(days=30) if source_text else None,
+            )
+            return jsonify({'contact': server.json_safe(value)}), 201
+        except ValueError as error:
+            return fail(str(error), 400, 'INVALID_CONTACT')
+        except Exception:
+            app.logger.error('Contact create failed')
+            return fail('Database is temporarily unavailable.', 503, 'DATABASE_UNAVAILABLE')
+
+    @app.patch('/api/contacts/<contact_id>')
+    def update_contact(contact_id):
+        try:
+            body = request.get_json(silent=True)
+            changes, _ = server.validate_contact_body(body, partial=True)
+            repository().update_contact(owner_id(), contact_id, changes,
+                                        events=body.get('events') if 'events' in body else None,
+                                        tags=body.get('tags') if 'tags' in body else None)
+            value = repository().get_contact(owner_id(), contact_id)
+            if value is None:
+                return fail('Contact not found.', 404, 'CONTACT_NOT_FOUND')
+            return jsonify({'contact': server.json_safe(value)})
+        except ValueError as error:
+            return fail(str(error), 400, 'INVALID_CONTACT')
+        except Exception:
+            app.logger.error('Contact update failed')
+            return fail('Database is temporarily unavailable.', 503, 'DATABASE_UNAVAILABLE')
 
     @app.get('/api/session')
     def session_info():

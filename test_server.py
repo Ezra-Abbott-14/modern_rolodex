@@ -117,3 +117,66 @@ class HttpTests(unittest.TestCase):
 
     def test_remote_development_access_is_rejected(self):
         self.assertEqual(self.client.get('/',environ_overrides={'REMOTE_ADDR':'10.0.0.5'}).status_code,403)
+
+
+class FakeContactRepository:
+    def __init__(self):
+        self.contacts = {}
+        self.sources = []
+
+    def list_contacts(self, owner_id):
+        return [value for value in self.contacts.values() if value['owner_id'] == owner_id]
+
+    def get_contact(self, owner_id, contact_id):
+        value = self.contacts.get(contact_id)
+        return value if value and value['owner_id'] == owner_id else None
+
+    def create_contact(self, owner_id, profile, **kwargs):
+        value = {'id': f'contact-{len(self.contacts) + 1}', 'owner_id': owner_id,
+                 **{field: profile.get(field) for field in server.FIELDS},
+                 'events': profile.get('events', []), 'tags': profile.get('tags', [])}
+        self.contacts[value['id']] = value
+        self.sources.append(kwargs.get('source_text'))
+        return value
+
+    def update_contact(self, owner_id, contact_id, changes, *, events=None, tags=None):
+        value = self.get_contact(owner_id, contact_id)
+        if value is None:
+            from database.repository import ContactNotFound
+            raise ContactNotFound('not found')
+        value.update(changes)
+        if events is not None:
+            value['events'] = events
+        if tags is not None:
+            value['tags'] = tags
+
+
+class DatabaseRouteTests(unittest.TestCase):
+    def setUp(self):
+        self.repository = FakeContactRepository()
+        self.app = server.create_app({'TESTING': True, 'PRODUCTION': False,
+                                      'DEMO_ACCESS_CODE': '', 'PUBLIC_ORIGIN': '',
+                                      'SECRET_KEY': 'local-test-secret', 'TRUST_PROXY': False})
+        self.client = self.app.test_client()
+        self.configured = patch('server.database_configured', return_value=True)
+        self.repo = patch('server.get_repository', return_value=self.repository)
+        self.configured.start(); self.repo.start()
+
+    def tearDown(self):
+        self.repo.stop(); self.configured.stop()
+
+    def test_create_list_update_and_owner_scope(self):
+        response = self.client.post('/api/contacts', json={'name': 'Jamie Rivera',
+            'notes': 'Met at the hackathon.', 'events': ['Won a contest'],
+            'tags': ['robotics'], 'source_text': 'I met Jamie at the hackathon.'})
+        self.assertEqual(response.status_code, 201)
+        contact_id = response.json['contact']['id']
+        self.assertEqual(response.json['contact']['owner_id'], server.DEV_OWNER_ID)
+        self.assertEqual(self.client.get('/api/contacts').status_code, 200)
+        response = self.client.patch(f'/api/contacts/{contact_id}', json={'notes': 'Updated'})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json['contact']['notes'], 'Updated')
+        self.assertEqual(self.client.get('/api/contacts/not-owned').status_code, 404)
+
+    def test_invalid_contact_is_rejected(self):
+        self.assertEqual(self.client.post('/api/contacts', json={'name': 12}).status_code, 400)
