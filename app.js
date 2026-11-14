@@ -1,6 +1,15 @@
 import { initStreetValleyWorld } from './street_valley_world.js';
 import { extractProfile } from './profile-api.mjs';
 
+const introLoader = document.querySelector('#introLoader');
+if (introLoader) {
+  window.setTimeout(() => {
+    introLoader.classList.add('is-done');
+    introLoader.setAttribute('aria-hidden', 'true');
+    window.setTimeout(() => introLoader.remove(), 700);
+  }, 1500);
+}
+
 const seed = [
   {
     id: 1,
