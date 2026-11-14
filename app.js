@@ -3,6 +3,8 @@ const transcript = document.querySelector('#transcript');
 const generateButton = document.querySelector('#generateButton');
 const captureHint = document.querySelector('#captureHint');
 const toast = document.querySelector('#toast');
+const updateDialog = document.querySelector('#updateDialog');
+const updateForm = document.querySelector('#updateForm');
 
 const seed = [
   { id: 1, name: 'Maya', role: 'Artist', met: 'Saturday market', city: '—', phone: '—', email: '—', notes: 'Collects matchbooks from every city she visits.', tags: ['art', 'maker'], avatar: 'M', tone: 'rust' },
@@ -54,6 +56,8 @@ let activeLetter = 'ALL';
 let deckIndex = 0;
 let visiblePeople = [];
 let dragStart = null;
+let wheelDelta = 0;
+let wheelLocked = false;
 
 function savePeople() {
   localStorage.setItem(PEOPLE_KEY, JSON.stringify(people));
@@ -227,6 +231,30 @@ function exportPeople() {
   URL.revokeObjectURL(link.href);
 }
 
+function populateUpdateNames() {
+  const select = $('#updateName');
+  select.replaceChildren();
+  sortByLastName(people).forEach((person) => {
+    const option = document.createElement('option');
+    option.value = person.name;
+    option.textContent = person.name;
+    select.append(option);
+  });
+  loadUpdateFields();
+}
+
+function loadUpdateFields() {
+  const person = people.find((item) => samePerson(item.name, $('#updateName').value));
+  if (!person) return;
+  document.querySelectorAll('[data-update-value]').forEach((input) => {
+    const field = input.dataset.updateValue;
+    input.value = field === 'tags' ? person.tags.join(', ') : person[field] || '';
+    input.disabled = true;
+    const checkbox = document.querySelector(`[data-field="${field}"]`);
+    if (checkbox) checkbox.checked = false;
+  });
+}
+
 generateButton.onclick = async () => {
   const note = transcript.value.trim();
   if (!note) return showToast('Write a note first.');
@@ -241,7 +269,16 @@ generateButton.onclick = async () => {
 $('#prevBtn').onclick = () => moveDeck(-1);
 $('#nextBtn').onclick = () => moveDeck(1);
 $('#search').oninput = () => { deckIndex = 0; renderDeck(); };
-$('#deckWindow').addEventListener('wheel', (event) => { event.preventDefault(); moveDeck(event.deltaY > 0 ? 1 : -1); }, { passive: false });
+$('#deckWindow').addEventListener('wheel', (event) => {
+  event.preventDefault();
+  if (wheelLocked) return;
+  wheelDelta += event.deltaY;
+  if (Math.abs(wheelDelta) < 100) return;
+  moveDeck(wheelDelta > 0 ? 1 : -1);
+  wheelDelta = 0;
+  wheelLocked = true;
+  window.setTimeout(() => { wheelLocked = false; }, 550);
+}, { passive: false });
 document.addEventListener('keydown', (event) => {
   if (event.key === 'ArrowRight') moveDeck(1);
   if (event.key === 'ArrowLeft') moveDeck(-1);
@@ -251,6 +288,32 @@ $('#deckWindow').addEventListener('pointerdown', (event) => { dragStart = event.
 $('#deckWindow').addEventListener('pointerup', (event) => { if (dragStart === null) return; const distance = event.clientX - dragStart; if (Math.abs(distance) > 45) moveDeck(distance < 0 ? 1 : -1); dragStart = null; });
 $('#addBtn').onclick = () => { $('#personForm').reset(); $('#personDialog').showModal(); };
 $('#cancelBtn').onclick = () => $('#personDialog').close();
+$('#updateBtn').onclick = () => { populateUpdateNames(); updateDialog.showModal(); };
+$('#cancelUpdateBtn').onclick = () => updateDialog.close();
+$('#updateName').onchange = loadUpdateFields;
+document.querySelectorAll('[data-field]').forEach((checkbox) => {
+  checkbox.onchange = () => {
+    const input = document.querySelector(`[data-update-value="${checkbox.dataset.field}"]`);
+    if (input) input.disabled = !checkbox.checked;
+  };
+});
+updateForm.onsubmit = (event) => {
+  event.preventDefault();
+  const person = people.find((item) => samePerson(item.name, $('#updateName').value));
+  const selected = [...updateForm.querySelectorAll('[data-field]:checked')];
+  if (!person) return showToast('Choose a person first.');
+  if (!selected.length) return showToast('Select at least one field to update.');
+  selected.forEach((checkbox) => {
+    const field = checkbox.dataset.field;
+    const input = updateForm.querySelector(`[data-update-value="${field}"]`);
+    if (field === 'tags') person.tags = input.value.split(',').map((tag) => tag.trim()).filter(Boolean);
+    else person[field] = input.value.trim() || '—';
+  });
+  savePeople();
+  updateDialog.close();
+  render();
+  showToast(`${person.name} updated.`);
+};
 $('#personForm').onsubmit = (event) => { event.preventDefault(); const person = buildPerson(new FormData(event.target)); const existing = people.find((item) => samePerson(item.name, person.name)); if (existing) { existing.notes = `${existing.notes}\n• ${person.notes}`; showToast(`${existing.name} updated.`); } else { people.push(person); showToast(`${person.name} added.`); } savePeople(); $('#personDialog').close(); activeLetter = 'ALL'; deckIndex = 0; render(); };
 $('#exportBtn').onclick = exportPeople;
 

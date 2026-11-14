@@ -17,6 +17,7 @@
         </div>
         <div class="top-actions">
           <button class="ghost" id="exportBtn" type="button">Export cards</button>
+          <button class="ghost" id="updateBtn" type="button">Update card</button>
           <button class="primary" id="addBtn" type="button">＋ Add person</button>
         </div>
       </header>
@@ -85,6 +86,27 @@
         <div class="modal-actions">
           <button type="button" class="ghost" id="cancelBtn">Cancel</button>
           <button class="primary" type="submit">Save card</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="updateDialog">
+      <form class="modal" id="updateForm">
+        <h2>Update a card</h2>
+        <p class="modal-help">Choose a person by exact name, then select only the information you want to change.</p>
+        <label class="field full">Name key<select id="updateName" name="key" required></select></label>
+        <div class="update-fields">
+          <label class="update-field"><span><input type="checkbox" data-field="role" /> Role / company</span><input name="role" data-update-value="role" placeholder="Designer at..." disabled /></label>
+          <label class="update-field"><span><input type="checkbox" data-field="met" /> Where you met</span><input name="met" data-update-value="met" placeholder="Saturday market" disabled /></label>
+          <label class="update-field"><span><input type="checkbox" data-field="city" /> City</span><input name="city" data-update-value="city" placeholder="Portland, OR" disabled /></label>
+          <label class="update-field"><span><input type="checkbox" data-field="phone" /> Phone</span><input name="phone" data-update-value="phone" placeholder="(555) 123-4567" disabled /></label>
+          <label class="update-field"><span><input type="checkbox" data-field="email" /> Email</span><input name="email" data-update-value="email" placeholder="hello@example.com" disabled /></label>
+          <label class="update-field full"><span><input type="checkbox" data-field="notes" /> Memory / notes</span><textarea name="notes" data-update-value="notes" rows="3" placeholder="What should you remember?" disabled></textarea></label>
+          <label class="update-field full"><span><input type="checkbox" data-field="tags" /> Tags</span><input name="tags" data-update-value="tags" placeholder="design, coffee, local" disabled /></label>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="ghost" id="cancelUpdateBtn">Cancel</button>
+          <button class="primary" type="submit">Save updates</button>
         </div>
       </form>
     </dialog>
