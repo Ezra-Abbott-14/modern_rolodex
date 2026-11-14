@@ -134,3 +134,77 @@ examples and existing saved contacts; do not reset anyone's localStorage.
   checks passed, the next step is commit, fetch/check the remote head, and a normal
   fast-forward push without overwriting concurrent changes. Refresh the running app
   to load the repaired modules; keep the Python server running.
+
+## 2026-11-14 — Secure Python backend and prepare shared-device hosting
+
+### Request, clarified infrastructure, and scope
+
+Secure the backend so other machines can use Gemini without receiving the API key.
+The team requested detailed docs. Their teammate is preparing AWS with MySQL RDS;
+they explicitly asked us to bypass the hosting-provisioning step for now. RDS is the
+database, not compute. Public deployment, HTTPS/domain details, and an actual second
+device are pending that teammate. Do not claim remote deployment is complete.
+
+### Changes and key decisions
+
+- `webapp.py`, `templates/login.html`: Flask application with production startup
+  validation, shared demo access code, signed HttpOnly/Secure/SameSite sessions,
+  four-hour expiry and server-side session revocation, CSRF, origin/host checks,
+  security headers, HTTPS redirects, login/API rate limits, and Gemini concurrency cap.
+- `server.py`: retain Gemini extraction/validation, replace the development HTTP
+  handler with the Flask app served by Waitress for every normal startup path.
+- `profile-api.mjs`, `app.js`, `index.html`: attach CSRF when signed in, show session
+  expiry help, and sign out. No Gemini key is returned to the browser.
+- `requirements.txt`, `setup.ps1`, `start.ps1`: pin dependencies, use an ignored
+  project virtualenv, and run the complete test suite. Installation was tested.
+- `Dockerfile`, `.dockerignore`, `Procfile`: portable non-root image/start settings,
+  named asset copies, health check, and exclusion of .env/Git/generated media.
+- `DEPLOYMENT.md`: detailed AWS handoff, environment/secret/proxy contract, operational
+  limits, example commands, and explicit pending public-device acceptance checklist.
+- `README.md`, `AGENTS.md`, `.env.example`: reflect new setup and production requirements.
+- Rationale: a shared-code gate is appropriate for the bounded hackathon demo without
+  introducing a new identity provider or altering profile storage. Keep the key and
+  hosting secrets server-side. A production WSGI server replaces the development server.
+- Production uses exactly one process/replica because session revocation and limits
+  are in memory. Scaling requires shared state; RDS migration is separate work.
+- Proxy protocol trust is opt-in and requires a private backend listener reachable
+  only from the trusted TLS proxy. Forwarded host/IP values are not trusted.
+
+### Verification (updated as checks finish)
+
+- Passed: pinned dependencies installed in .venv; Windows setup.ps1 and start.ps1 -Test.
+- Passed: 25 Python unit/security/Flask integration tests and 12 JavaScript tests.
+- Tests include fail-closed production settings, unauthenticated rejection before
+  Gemini, login/API CSRF, cookie flags, logout/replayed-cookie rejection, forged
+  cookies, rate/concurrency limits, HTTPS/proxy behavior, body limits, origin/host
+  checks, private-file exclusion, secret-free error responses, and existing extraction.
+- Passed browser test at a loopback-only test instance: incorrect code rejected,
+  correct test code opened all nine example cards; real Gemini extraction for a
+  fictional Casey Secure note completed with the CSRF header; Save, reload, and
+  appearance search succeeded. Sign out returned to the login page and a new login
+  session retained browser-local contacts. No real access code was created or logged.
+- Passed existing local development browser flow: fictional Dana Local extraction,
+  Save, reload, and appearance search. One Gemini connection attempt timed out; a
+  manual retry succeeded. There is no silent model fallback or automatic billed retry.
+- The browser check exposed that a no-referrer policy can produce Origin:null on
+  form navigation. Corrected it to strict-origin-when-cross-origin and retested the
+  real form successfully; retained rejection of null/untrusted origins. Local origin
+  aliases were also limited to localhost/127.0.0.1 on the actual backend port.
+- Evidence: ignored test-results/secured-backend-login.png and secured-backend-profile.png.
+- Passed: pip check and JavaScript syntax checks; dependency setup/launcher work.
+- Preserved exclusive socket binding on Windows before handing the listener to
+  Waitress; a regression test confirms a second process cannot share the port.
+- Final normal-server restart passed `/api/health` with HTTP 200 and CSP/nosniff
+  headers. A real profile request through the final Waitress socket path returned
+  fictional Jamie Demo successfully. The temporary sign-in server was stopped.
+- Not run: Docker build (Docker unavailable), AWS deployment, public certificate/
+  networking checks, or real external-device access. These must remain explicit gaps.
+
+### Open questions and answers
+
+- Answered by team: AWS teammate is preparing infrastructure; defer provisioning.
+- Pending AWS teammate: compute/service selection, HTTPS public origin, secrets
+  injection method/role, private proxy networking, and the final deployment URL.
+- No new Gemini key is needed per device once the shared service is deployed.
+- Data persistence remains browser-local; signing in does not connect RDS or share
+  contacts between devices. Confirm database requirements in a separate task.

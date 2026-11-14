@@ -4,7 +4,6 @@ Run: python browser_fixture.py; open http://localhost:8001.
 """
 import io
 import json
-from http.server import ThreadingHTTPServer
 from unittest.mock import patch
 import server
 from test_server import example_profile
@@ -27,4 +26,6 @@ if __name__ == '__main__':
     with patch.dict('os.environ', {'GEMINI_API_KEY': 'test-only-not-a-real-key'}):
         with patch('server.urlopen', side_effect=fixture_response):
             print('TEST FIXTURE ONLY (simulated Gemini): http://localhost:8001', flush=True)
-            ThreadingHTTPServer(('127.0.0.1', 8001), server.RolodexHandler).serve_forever()
+            from waitress import serve
+            app = server.create_app({'PRODUCTION':False, 'DEMO_ACCESS_CODE':'', 'PUBLIC_ORIGIN':''})
+            serve(app, host='127.0.0.1', port=8001)

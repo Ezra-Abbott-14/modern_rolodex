@@ -5,6 +5,21 @@ Type a short memory, let Gemini extract the details, review the results, and fil
 The wood case, teal index, cream cards, and deck navigation preserve the original Rolodex design.
 Street Valley is a separate animated village below the card deck.
 
+## Shared devices and secured hosting
+
+For the AWS teammate, start with **[DEPLOYMENT.md](DEPLOYMENT.md)**. It contains the
+complete production environment table, HTTPS/proxy/network setup, secret handling,
+single-instance limits, Docker/start commands, and the second-device acceptance test.
+AWS provisioning is deferred to the teammate at the team's request; there is no
+verified public HTTPS URL yet. RDS is a database, not the Python host. This update
+does not migrate contacts to RDS: each browser still has its own saved cards.
+
+Production visitors sign in with a separate demo access code, not the Gemini key.
+Flask + Waitress enforce the application gate, signed sessions, CSRF checks, request
+and concurrency limits, allowed hosts/origins, and secure response/cookie settings.
+The existing developer URL stays loopback-only by default. Do not publish the
+developer's port or change only HOST to expose it without the production settings.
+
 ## Start locally
 
 ### 1. Open a terminal in this project
@@ -17,8 +32,16 @@ Set-Location 'C:\Users\EzraA\OneDrive\Desktop\modern_rolodex'
 ```
 
 All commands below assume that this folder is the terminal's current directory.
-The app needs Python 3.9 or newer and internet access for Gemini. No pip dependencies
-are required. Node.js is only needed for the JavaScript tests.
+The app needs Python 3.10 or newer and internet access for Gemini. Install its pinned
+Flask/Waitress dependencies once on Windows:
+
+```powershell
+.\setup.ps1
+```
+
+This creates an ignored `.venv` and installs `requirements.txt`. Node.js is only
+needed for JavaScript tests. On Linux/macOS, create a virtualenv, activate it, and
+run `python -m pip install -r requirements.txt` before starting the application.
 
 ### 2. Configure the key once
 
@@ -52,9 +75,9 @@ In PowerShell, run:
 .\start.ps1
 ```
 
-The launcher looks for `python` or `python3`, then tries the bundled runtime available
-in this Codex workspace. The bundled runtime is a convenience on this machine, not
-something another teammate can assume is installed. With a normal Python installation,
+The launcher prefers `.venv` created by setup.ps1, then looks for `python`/`python3`
+or this Codex workspace's bundled runtime. Another teammate must install Python;
+the bundled runtime is not part of the repository. If your virtualenv is activated,
 you can instead run:
 
 ```powershell
@@ -211,7 +234,9 @@ Manual card entry remains available.
 `GEMINI_MODEL` is configurable and defaults to `gemini-3.1-flash-lite`; your project must have access
 and quota for the selected model. The implementation uses Google's supported REST
 `generateContent` endpoint with output capped at 2,048 tokens. `PORT` defaults to 8000.
-The server binds to this computer only and rejects duplicate listeners on the same port.
+Local mode binds to this computer only; Waitress serves the application and rejects
+a second listener on the same address. Hosted mode requires the explicit settings
+in DEPLOYMENT.md and an HTTPS proxy in front of the private Python port.
 
 ## Tests and demo verification
 
@@ -222,9 +247,9 @@ contacts are preserved; no reset is required. If the old broken page is still op
 refresh it after restarting Python. Optional fields hidden in the HTML are skipped
 when populating Gemini results. See DEVELOPMENT_LOG.md for the full repair evidence.
 
-- `python -m unittest -v test_server.py` or Windows `./start.ps1 -Test`: unit and HTTP integration tests.
+- `python -m unittest discover -v -p 'test_*.py'` or Windows `./start.ps1 -Test`: backend/security/integration tests (use the virtualenv).
 - `node --check app.js`: JavaScript syntax check.
-- `node --test test_profile_api.mjs`: ten JavaScript request/response/form tests, including
+- `node --test test_profile_api.mjs`: twelve JavaScript request/response/form tests, including
   the Live Server HTML error that caused the reported failure. No npm packages needed.
   This also imports the real API module (catching startup syntax errors) and checks
   that a hidden optional pronouns field cannot break successful Gemini extraction.
@@ -236,8 +261,9 @@ when populating Gemini results. See DEVELOPMENT_LOG.md for the full repair evide
 - To repeat the browser checks against the fixture, use notes containing Jamie Rivera and Casey Morgan;
   `unnamed` triggers a missing-name result. Only those test responses are supplied by the fixture.
 
-The Python suite currently has 13 tests, including Live Server preflight/response
-headers and rejection of untrusted browser origins. Tests simulate Gemini to make edge cases
+The Python suite currently has 25 tests, including login/CSRF/cookie/session/rate-limit
+checks, Live Server preflight/response headers, and untrusted-origin rejection.
+Tests simulate Gemini to make edge cases
 repeatable without spending API quota; they do not prove that Google's live API works.
 The frontend suite sends notes through a supplied test transport to check error
 classification and data handling. Browser tests are separate scripted interactions

@@ -1,9 +1,8 @@
-"""Rolodexi localhost server and Gemini extraction. No external Python dependencies."""
+"""Gemini extraction and secured Flask/Waitress server entry point."""
 import json
 import os
 import re
 import socket
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
@@ -88,96 +87,37 @@ def call_gemini(note):
     return validate_profile(profile)
 
 
-class LocalHTTPServer(ThreadingHTTPServer):
-    # Windows otherwise permits multiple servers to bind the same address,
-    # sending browser requests unpredictably to old copies after a restart.
-    allow_reuse_address = False
+def create_app(overrides=None):
+    from webapp import create_app as factory
+    return factory(overrides)
 
-    def server_bind(self):
+
+def open_listener(host, port):
+    listener = socket.socket(socket.AF_INET6 if ':' in host else socket.AF_INET, socket.SOCK_STREAM)
+    try:
         if hasattr(socket, 'SO_EXCLUSIVEADDRUSE'):
-            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 1)
-        super().server_bind()
-
-
-class RolodexHandler(BaseHTTPRequestHandler):
-    PREVIEW_ORIGINS = {'http://localhost:5500', 'http://127.0.0.1:5500'}
-
-    def allowed_origin(self):
-        origin = self.headers.get('Origin')
-        own_origins = {f'http://localhost:{self.server.server_port}', f'http://127.0.0.1:{self.server.server_port}'}
-        return origin is None or origin in self.PREVIEW_ORIGINS or origin in own_origins
-
-    def end_headers(self):
-        origin = self.headers.get('Origin')
-        if origin in self.PREVIEW_ORIGINS:
-            self.send_header('Access-Control-Allow-Origin', origin)
-            self.send_header('Vary', 'Origin')
-        super().end_headers()
-
-    def do_OPTIONS(self):
-        if self.path != '/api/profile':
-            return self.send_json(404, {'error':'Not found'})
-        if not self.allowed_origin():
-            return self.send_json(403, {'error':'This origin cannot use the local profile service.'})
-        self.send_response(204)
-        self.send_header('Access-Control-Allow-Methods', 'POST, OPTIONS')
-        self.send_header('Access-Control-Allow-Headers', 'Content-Type')
-        self.end_headers()
-
-    def send_json(self, status, payload):
-        body = json.dumps(payload, ensure_ascii=False).encode('utf-8')
-        self.send_response(status)
-        self.send_header('Content-Type', 'application/json; charset=utf-8')
-        self.send_header('Content-Length', str(len(body)))
-        self.send_header('Cache-Control', 'no-store')
-        self.end_headers()
-        self.wfile.write(body)
-
-    def do_POST(self):
-        if not self.allowed_origin():
-            return self.send_json(403, {'error':'This origin cannot use the local profile service.'})
-        if self.path != '/api/profile':
-            return self.send_json(404, {'error': 'Not found'})
-        try:
-            length = int(self.headers.get('Content-Length', '0'))
-            if not 0 < length <= 64000:
-                return self.send_json(413, {'error': 'Please send a short note (up to 8,000 characters).'})
-            body = json.loads(self.rfile.read(length).decode('utf-8'))
-            note = body.get('note') if isinstance(body, dict) else None
-            if not isinstance(note, str) or not note.strip() or len(note) > 8000:
-                return self.send_json(400, {'error': 'Enter a note of 1–8,000 characters about a person.'})
-            self.send_json(200, {'profile': call_gemini(note.strip())})
-        except (ValueError, UnicodeError) as error:
-            self.send_json(400, {'error': str(error) if str(error).startswith(('Please', 'Gemini')) else 'Invalid request. Please try again.'})
-        except RuntimeError as error:
-            self.send_json(503, {'error': str(error)})
-
-    def do_GET(self):
-        if self.path == '/api/health':
-            return self.send_json(200, {'configured': bool(os.environ.get('GEMINI_API_KEY', '').strip())})
-        # Only serve explicit public assets, never secrets, source code, or Git metadata.
-        assets = {'/': ('index.html', 'text/html; charset=utf-8'),
-                  '/index.html': ('index.html', 'text/html; charset=utf-8'),
-                  '/styles.css': ('styles.css', 'text/css; charset=utf-8'),
-                  '/app.js': ('app.js', 'text/javascript; charset=utf-8'),
-                  '/profile-api.mjs': ('profile-api.mjs', 'text/javascript; charset=utf-8'),
-                  '/street_valley_characters.js': ('street_valley_characters.js', 'text/javascript; charset=utf-8'),
-                  '/street_valley_world.js': ('street_valley_world.js', 'text/javascript; charset=utf-8'),
-                  '/roladexi.jpg': ('roladexi.jpg', 'image/jpeg')}
-        asset = assets.get(self.path.split('?', 1)[0])
-        if not asset or not (ROOT / asset[0]).is_file():
-            return self.send_json(404, {'error': 'Not found'})
-        content = (ROOT / asset[0]).read_bytes()
-        self.send_response(200)
-        self.send_header('Content-Type', asset[1])
-        self.send_header('Content-Length', str(len(content)))
-        self.end_headers()
-        self.wfile.write(content)
+            listener.setsockopt(socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 1)
+        else:
+            listener.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        listener.bind((host, port))
+        listener.listen(128)
+        return listener
+    except Exception:
+        listener.close()
+        raise
 
 
 if __name__ == '__main__':
+    from waitress import serve
     load_env()
+    app = create_app()
+    production = app.config['PRODUCTION']
+    host = os.environ.get('HOST', '0.0.0.0' if production else '127.0.0.1')
+    if not production and host not in ('127.0.0.1', 'localhost', '::1'):
+        raise RuntimeError('Network binding requires APP_ENV=production with HTTPS and access controls configured.')
     port = int(os.environ.get('PORT', '8000'))
-    print(f'Rolodexi: http://localhost:{port}', flush=True)
-    httpd = LocalHTTPServer(('127.0.0.1', port), RolodexHandler)
-    httpd.serve_forever()
+    with open_listener(host, port) as listener:
+        print(f'Rolodexi: {app.config["PUBLIC_ORIGIN"] or f"http://localhost:{port}"} ({"production" if production else "development"})', flush=True)
+        serve(app, sockets=[listener], threads=8, max_request_body_size=64000,
+              max_request_header_size=16384, channel_timeout=60, connection_limit=100,
+              clear_untrusted_proxy_headers=not app.config['TRUST_PROXY'])

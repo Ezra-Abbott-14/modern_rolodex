@@ -56,6 +56,24 @@ test('other hosts and custom backend ports stay same-origin', async () => {
 test('Gemini errors remain visible', async () => {
   await assert.rejects(extractProfile('Jamie', async()=>reply({error:'Gemini quota is exhausted.'},503)), /Gemini quota/);
 });
+
+test('hosted authentication expiry remains actionable', async () => {
+  await assert.rejects(extractProfile('Jamie',async()=>reply({error:'Sign in again',code:'AUTH_REQUIRED'},401)),{code:'AUTH_REQUIRED'});
+});
+
+test('signed-in browser attaches CSRF token without embedding API secrets', async () => {
+  const prior=globalThis.document;
+  try {
+    globalThis.document={querySelector:()=>({content:'test-csrf-token'})};
+    await extractProfile('Jamie',async(url,options)=>{
+      assert.equal(options.headers['X-CSRF-Token'],'test-csrf-token');
+      assert.equal(Object.keys(options.headers).some(name=>name.toLowerCase().includes('api-key')),false);
+      return reply({profile});
+    });
+  } finally {
+    if(prior===undefined) delete globalThis.document; else globalThis.document=prior;
+  }
+});
 test('invalid JSON is not mislabeled as an unreachable server', async () => {
   await assert.rejects(extractProfile('Jamie', async()=>({...reply(null),json:async()=>{throw new SyntaxError();}})), /unreadable data/);
 });
