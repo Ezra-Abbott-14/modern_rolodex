@@ -4,7 +4,7 @@ import { extractProfile } from './profile-api.mjs';
 const introLoader = document.querySelector('#introLoader');
 if (introLoader) {
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const introDuration = reducedMotion ? 250 : 6700;
+  const introDuration = reducedMotion ? 250 : 5300;
   window.setTimeout(() => {
     introLoader.classList.add('is-done');
     introLoader.setAttribute('aria-hidden', 'true');

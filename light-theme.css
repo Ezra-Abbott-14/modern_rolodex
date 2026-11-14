@@ -1346,7 +1346,7 @@ body.ma-ui.animation-done .editorial-hero-wordmark { opacity:1; }
   color:#1d3552;
   font:700 clamp(220px,72vw,980px)/.72 'Helvetica Neue',Helvetica,Arial,sans-serif;
   box-shadow:none;
-  animation:introRJourney 6.2s cubic-bezier(.2,.78,.2,1) both;
+  animation:introRJourney 4.8s cubic-bezier(.2,.78,.2,1) both;
 }
 
 .orbit-rail {
@@ -1354,19 +1354,19 @@ body.ma-ui.animation-done .editorial-hero-wordmark { opacity:1; }
   left:7%;
   width:86%;
   background:linear-gradient(90deg,transparent,#6d9aa5 16%,#6d9aa5 84%,transparent);
-  animation:introRailJourney 6.2s ease-in-out both;
+  animation:introRailJourney 4.8s ease-in-out both;
 }
 
 .ring-one {
-  animation:introRingJourneyOne 6.2s cubic-bezier(.2,.75,.2,1) both;
+  animation:introRingJourneyOne 4.8s cubic-bezier(.2,.75,.2,1) both;
 }
 
 .ring-two {
-  animation:introRingJourneyTwo 6.2s cubic-bezier(.2,.75,.2,1) both;
+  animation:introRingJourneyTwo 4.8s cubic-bezier(.2,.75,.2,1) both;
 }
 
 .intro-loader-character {
-  animation:introCharacterFollow 6.2s cubic-bezier(.2,.75,.2,1) both;
+  animation:introCharacterFollow 4.8s cubic-bezier(.2,.75,.2,1) both;
 }
 
 .intro-loader-wordmark {
@@ -1374,27 +1374,27 @@ body.ma-ui.animation-done .editorial-hero-wordmark { opacity:1; }
   left:7%;
   transform:translateY(-50%) scale(.72);
   transform-origin:left center;
-  animation:introWordmarkLift 6.2s cubic-bezier(.2,.8,.2,1) both;
+  animation:introWordmarkLift 4.8s cubic-bezier(.2,.8,.2,1) both;
 }
 
 .intro-loader-about {
-  animation:introAboutReveal 6.2s ease-in-out both;
+  animation:introAboutReveal 4.8s ease-in-out both;
 }
 
 .intro-loader-copy {
-  animation:introCopyReveal 6.2s cubic-bezier(.2,.8,.2,1) both;
+  animation:introCopyReveal 4.8s cubic-bezier(.2,.8,.2,1) both;
 }
 
 .intro-pointer {
-  animation:introPointerOpen 6.2s cubic-bezier(.2,.75,.2,1) both;
+  animation:introPointerOpen 4.8s cubic-bezier(.2,.75,.2,1) both;
 }
 
 .intro-pointer:after {
-  animation:introPointerClick 6.2s ease-in-out both;
+  animation:introPointerClick 4.8s ease-in-out both;
 }
 
 .intro-blue-corner {
-  animation:introCornerReveal 6.2s ease-in-out both;
+  animation:introCornerReveal 4.8s ease-in-out both;
 }
 
 @keyframes introSurfaceIn {
@@ -2317,7 +2317,7 @@ body {
   color:#1d3552;
   font:700 clamp(220px,72vw,980px)/.72 'Helvetica Neue',Helvetica,Arial,sans-serif;
   box-shadow:none;
-  animation:introRJourney 6.2s cubic-bezier(.2,.78,.2,1) both !important;
+  animation:introRJourney 4.8s cubic-bezier(.2,.78,.2,1) both !important;
 }
 
 .intro-loader .orbit-rail {
@@ -2325,19 +2325,19 @@ body {
   left:7%;
   width:86%;
   background:linear-gradient(90deg,transparent,#6d9aa5 16%,#6d9aa5 84%,transparent);
-  animation:introRailJourney 6.2s ease-in-out both !important;
+  animation:introRailJourney 4.8s ease-in-out both !important;
 }
 
 .intro-loader .ring-one {
-  animation:introRingJourneyOne 6.2s cubic-bezier(.2,.75,.2,1) both !important;
+  animation:introRingJourneyOne 4.8s cubic-bezier(.2,.75,.2,1) both !important;
 }
 
 .intro-loader .ring-two {
-  animation:introRingJourneyTwo 6.2s cubic-bezier(.2,.75,.2,1) both !important;
+  animation:introRingJourneyTwo 4.8s cubic-bezier(.2,.75,.2,1) both !important;
 }
 
 .intro-loader .intro-loader-character {
-  animation:introCharacterFollow 6.2s cubic-bezier(.2,.75,.2,1) both !important;
+  animation:introCharacterFollow 4.8s cubic-bezier(.2,.75,.2,1) both !important;
 }
 
 .intro-loader .intro-loader-wordmark {
@@ -2345,27 +2345,27 @@ body {
   left:7%;
   transform:translateY(-50%) scale(.72);
   transform-origin:left center;
-  animation:introWordmarkLift 6.2s cubic-bezier(.2,.8,.2,1) both !important;
+  animation:introWordmarkLift 4.8s cubic-bezier(.2,.8,.2,1) both !important;
 }
 
 .intro-loader .intro-loader-about {
-  animation:introAboutReveal 6.2s ease-in-out both !important;
+  animation:introAboutReveal 4.8s ease-in-out both !important;
 }
 
 .intro-loader .intro-loader-copy {
-  animation:introCopyReveal 6.2s cubic-bezier(.2,.8,.2,1) both !important;
+  animation:introCopyReveal 4.8s cubic-bezier(.2,.8,.2,1) both !important;
 }
 
 .intro-loader .intro-pointer {
-  animation:introPointerOpen 6.2s cubic-bezier(.2,.75,.2,1) both !important;
+  animation:introPointerOpen 4.8s cubic-bezier(.2,.75,.2,1) both !important;
 }
 
 .intro-loader .intro-pointer:after {
-  animation:introPointerClick 6.2s ease-in-out both !important;
+  animation:introPointerClick 4.8s ease-in-out both !important;
 }
 
 .intro-loader .intro-blue-corner {
-  animation:introCornerReveal 6.2s ease-in-out both !important;
+  animation:introCornerReveal 4.8s ease-in-out both !important;
 }
 
 @media (prefers-reduced-motion:reduce) {
