@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="A voice-first virtual rolodex for remembering the people you meet." />
+    <title>Folio — Your people, remembered</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <a class="brand" href="#top" aria-label="Folio home">
+          <span class="brand-mark" aria-hidden="true">✳</span>
+          <span>folio</span>
+        </a>
+        <div class="topbar-actions">
+          <span class="sync-status"><span class="status-dot"></span> all caught up</span>
+          <button class="avatar-button" type="button" aria-label="Open profile menu">EA</button>
+        </div>
+      </header>
+
+      <section class="hero" id="top">
+        <div class="eyebrow">YOUR SOCIAL MEMORY</div>
+        <h1>The people worth<br /><em>remembering.</em></h1>
+        <p class="hero-copy">A gentle place for the details that make a person unforgettable.</p>
+      </section>
+
+      <section class="capture-card" aria-labelledby="capture-heading">
+        <div class="capture-header">
+          <div>
+            <div class="eyebrow">QUICK CAPTURE</div>
+            <h2 id="capture-heading">Tell me about someone.</h2>
+          </div>
+          <span class="keyboard-hint">⌘ K</span>
+        </div>
+        <div class="voice-row">
+          <button class="record-button" id="recordButton" type="button" aria-label="Start voice capture">
+            <span class="mic-icon" aria-hidden="true">⌕</span>
+            <span class="record-label">Tap to speak</span>
+            <span class="record-wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
+          </button>
+          <div class="transcript-wrap">
+            <textarea id="transcript" rows="3" placeholder="“I met Maya at the Saturday market. She has a bright red bob and told me about her first gallery show...”" aria-label="Person details"></textarea>
+            <div class="capture-footer">
+              <span id="captureHint">Voice notes become a profile in seconds.</span>
+              <button class="generate-button" id="generateButton" type="button">Generate profile <span>↗</span></button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="library-section" aria-labelledby="library-heading">
+        <div class="section-heading">
+          <div>
+            <div class="eyebrow">YOUR LIBRARY <span class="count-badge" id="profileCount">03</span></div>
+            <h2 id="library-heading">People in your orbit</h2>
+          </div>
+          <div class="filter-row">
+            <button class="filter active" type="button">All people</button>
+            <button class="filter" type="button">Recently added</button>
+            <button class="filter" type="button">A–Z</button>
+          </div>
+        </div>
+        <div class="profile-grid" id="profileGrid">
+          <article class="profile-card coral" data-name="Maya Chen" data-profile="maya">
+            <div class="card-top"><span class="profile-number">01</span><button class="more-button" type="button" aria-label="More options for Maya Chen">•••</button></div>
+            <div class="portrait portrait-maya" aria-label="Illustration of Maya Chen"><span>MC</span></div>
+            <div class="profile-info"><div class="tag">CREATIVE SPARK</div><h3>Maya Chen</h3><p>Met at the Saturday market</p><div class="profile-meta"><span>She / her</span><span>·</span><span>Added today</span></div></div>
+            <div class="memory-quote">“First gallery show is in October.”</div>
+          </article>
+          <article class="profile-card blue" data-name="Jon Bell" data-profile="jon">
+            <div class="card-top"><span class="profile-number">02</span><button class="more-button" type="button" aria-label="More options for Jon Bell">•••</button></div>
+            <div class="portrait portrait-jon" aria-label="Illustration of Jon Bell"><span>JB</span></div>
+            <div class="profile-info"><div class="tag">GOOD ENERGY</div><h3>Jon Bell</h3><p>Introduced by Nora at Bloom</p><div class="profile-meta"><span>He / him</span><span>·</span><span>Added yesterday</span></div></div>
+            <div class="memory-quote">“Training for his first half marathon.”</div>
+          </article>
+          <article class="profile-card yellow" data-name="Amara Lewis" data-profile="amara">
+            <div class="card-top"><span class="profile-number">03</span><button class="more-button" type="button" aria-label="More options for Amara Lewis">•••</button></div>
+            <div class="portrait portrait-amara" aria-label="Illustration of Amara Lewis"><span>AL</span></div>
+            <div class="profile-info"><div class="tag">THE CONNECTOR</div><h3>Amara Lewis</h3><p>On the train to Portland</p><div class="profile-meta"><span>She / her</span><span>·</span><span>Added Oct 14</span></div></div>
+            <div class="memory-quote">“Knows the best tiny bookstores.”</div>
+          </article>
+        </div>
+      </section>
+
+      <footer class="footer"><span>FOLIO / A SMALL MEMORY BANK</span><span>PRIVATE BY DESIGN <span class="footer-heart">♡</span></span></footer>
+    </main>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script src="app.js"></script>
+  </body>
+</html>
