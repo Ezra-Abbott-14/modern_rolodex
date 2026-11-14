@@ -10,7 +10,7 @@ if (introLoader) {
     introLoader.setAttribute('aria-hidden', 'true');
     document.body.classList.add('animation-done');
     document.body.classList.remove('animation-lock');
-    window.setTimeout(() => introLoader.remove(), 700);
+    window.setTimeout(() => introLoader.remove(), 550);
   }, introDuration);
 }
 
