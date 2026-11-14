@@ -2415,7 +2415,24 @@ body {
    Keep these scoped rules last so older prototype layouts cannot hide controls. */
 body.ma-ui .topbar { grid-template-columns:minmax(0,1fr) auto; gap:16px; }
 body.ma-ui .global-brand .brand-initial { color:var(--ma-acid); }
-body.ma-ui .editorial-hero-wordmark { top:30px; }
+body.ma-ui .editorial-hero-wordmark { top:54px; }
+body.ma-ui .form-grid select {
+  width:100%;
+  min-width:0;
+  min-height:38px;
+  padding:10px;
+  border:1px solid #c2d0dc;
+  border-radius:0;
+  background:#ffffff;
+  color:#1b2a3c;
+  font:12px 'DM Mono',monospace;
+  color-scheme:light;
+}
+body.ma-ui .form-grid select:focus-visible {
+  outline:2px solid var(--ma-ink);
+  outline-offset:2px;
+  border-color:var(--ma-ink);
+}
 body.ma-ui .top-actions { grid-column:2; grid-row:1; width:auto; flex-wrap:wrap; }
 body.ma-ui .top-actions .ghost:not([hidden]) {
   display:inline-flex;
@@ -2495,7 +2512,7 @@ body.ma-ui .street-valley-world { margin-top:0; }
   body.ma-ui .app { padding-top:150px; }
   body.ma-ui .editorial-hero { --editorial-top:150px; }
   body.ma-ui .editorial-hero.editorial-hero-mark-only { min-height:70px; }
-  body.ma-ui .editorial-hero-wordmark { top:30px; }
+  body.ma-ui .editorial-hero-wordmark { top:44px; }
   body.ma-ui .rolodex { grid-template-columns:54px minmax(0,1fr); gap:12px; padding:24px 12px 40px; }
   body.ma-ui .index-panel { padding-right:6px; }
   body.ma-ui .index-panel .tab { min-height:27px; font-size:10px; }

@@ -268,3 +268,26 @@ device are pending that teammate. Do not claim remote deployment is complete.
   upward card movement match the intended direction? The opening lasts 5.3s.
 - Pending team review: any further layout or motion adjustments before merging
   this visual work to main? Work stays on ui_thinking for this review.
+
+## 2026-11-14 — ui_thinking — logo spacing and gender dropdown polish
+
+- Request: move the large page logo down slightly and style Add person's gender
+  dropdown consistently with the rest of the form.
+- Changed light-theme.css only for UI: desktop wordmark top 30→54px; small-screen
+  top 30→44px. These offsets fit inside the existing hero without moving the deck.
+- The form's original shared padding/font rules covered input and textarea but
+  omitted select. Added a scoped .form-grid select rule: full width, 38px minimum
+  height, 10px padding, 12px DM Mono, white background, pale border, square corners,
+  dark text, and explicit light color scheme. Retained the native dropdown for
+  keyboard and assistive-technology support; its open menu follows the OS/browser.
+- Added a visible dark focus outline. Both gender choices and Not specified
+  remain available; no field values, validation, backend, or saved cards changed.
+- Browser verification on localhost:8000: computed small-screen logo top is 44px;
+  dropdown computes 10px padding, 12px DM Mono, white background and styled border.
+  Selected female, male, default, and used ArrowDown; reopened Add and confirmed
+  it resets to Not specified. Cancel closed normally. Screenshots saved under
+  ignored test-results/gender-dropdown-review.jpg and logo-spacing-review.jpg.
+- No new tests for a CSS-only adjustment; earlier 37 logic/integration tests are
+  unchanged. Did not repeat paid Gemini extraction or deployment checks.
+- Open question: whether the new logo offset is the team's preferred spacing;
+  ready for further visual feedback. Work remains on ui_thinking.
