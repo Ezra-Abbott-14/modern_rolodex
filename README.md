@@ -1,8 +1,10 @@
 # Rolodexi
 
 iHack 2026: reinvent the physical rolodex for people who struggle to remember new acquaintances.
-Dictate a short memory, let Gemini extract the details, review the results, and file a new card.
+Type a short memory, let Gemini extract the details, review the results, and file a new card.
 The wood case, teal index, cream cards, and deck navigation follow the team's design on main.
+Each card also includes a short “Street Valley · human take” so the person feels like a real
+connection rather than only a role, company, or set of contact fields.
 
 ## Start locally
 
@@ -21,12 +23,6 @@ are required. Node.js is only needed for the JavaScript tests.
 
 ### 2. Configure the key once
 
-<<<<<<< HEAD
-When you add a note, the app sends the note and existing contact summaries to
-`POST /api/merge`. Exact names merge into one card: two “Maya” notes merge, while
-“Maya” and “Maya Chen” remain separate.
-If the server or AI is unavailable, the browser uses its local merge fallback.
-=======
 The team has already configured this machine's `.env`; skip copying if it exists.
 For a new teammate's machine, create a key in [Google AI Studio](https://aistudio.google.com/apikey),
 then run this command, which will not overwrite an existing `.env`:
@@ -120,9 +116,10 @@ Find the `LISTENING` row and its PID. In Task Manager's Details tab, verify that
 is the Rolodexi Python process before ending it. Other Python processes may belong to
 unrelated work. Start one application instance afterward and check `/api/health` again.
 
-Click **Add person**, then **Dictate a note** and allow microphone access. Speak, click **Stop dictation**,
-and check the transcript. You can also type it. Click **Extract profile**, review/edit the fields,
-and **Save card**. Search matches names, notes, appearance, pronouns, and memorable events.
+Click **Add person**, type a note, and click **Extract profile**. Review/edit the fields and **Save card**.
+Saving another card with the exact same normalized name updates the existing card; “Maya” and
+“Maya Chen” remain separate. Use **Update card** to choose a person by name and select only the
+fields you want to change. Search matches names, notes, appearance, pronouns, and memorable events.
 Cards stay in this browser's localStorage; **Export cards** downloads a JSON backup.
 This is a local hackathon app, with no account login or cross-device sync.
 
@@ -130,9 +127,7 @@ This is a local hackathon app, with no account login or cross-device sync.
 
 1. Click **Add person**. The top of the dialog contains the meeting note; the rest
    contains editable profile fields. You can enter a card manually without Gemini.
-2. Click **Dictate a note**, allow microphone access if prompted, speak the person's
-   name and the details you remember, then click **Stop dictation**. Check and correct
-   the transcript before continuing. Alternatively, type the entire note.
+2. Type the person's name and the details you want to remember in the meeting note.
 3. Click **Extract profile** once. While it runs, extraction/save controls are disabled
    to avoid submitting overlapping work. The note is limited to 8,000 characters.
 4. Wait for “Details extracted with Gemini.” Review all fields and correct mistakes.
@@ -140,8 +135,7 @@ This is a local hackathon app, with no account login or cross-device sync.
 5. Click **Save card**. The new card appears at the front, and the search is cleared
    so it is not hidden by an earlier query. Saving writes the card to this browser.
 6. Search for a name or appearance detail, then reload the page and search again.
-   The saved card should remain. Each save creates a card; existing people are not
-   automatically merged or deduplicated.
+   The saved card should remain. Saving the same exact name updates one card instead of creating a duplicate.
 
 Browser storage is specific to the browser profile, hostname, and port. Cards on
 `127.0.0.1:5500`, `127.0.0.1:8000`, and `localhost:8000` are separate collections.
@@ -161,8 +155,7 @@ window or clearing site data may remove its saved cards.
 | Gemini quota is exhausted or busy | Wait and check the project's quota/billing in AI Studio. Avoid repeatedly pressing Extract. Manual card entry remains available. |
 | Extraction timed out | The note remains in the dialog. Check connectivity and retry once. Check `GEMINI_MODEL` if it was changed; the original 3.8 Flash configuration timed out during testing. |
 | Unreadable data / invalid profile | The service returned a response that does not match the expected format. Retry and report the exact message; this is distinguished from a connection failure. |
-| Dictation button is disabled | The browser does not expose speech recognition. Try current Chrome/Edge, or type the note to test extraction independently. |
-| Microphone access denied | Allow microphone access for the app in your browser, confirm the correct input device, then retry. Permissions can differ between localhost and 127.0.0.1. |
+| Need to add a memory | Voice capture is intentionally removed. Type the note into the meeting-note box, then extract the profile. |
 | Cards appear to be missing | Return to the same browser profile, hostname, and port used to save them; check search and the active alphabet filter. |
 | Address already in use / WinError 10048 / WinError 10013 | Check for an existing Rolodexi instance on the port and stop that instance before restarting. Do not run multiple copies. |
 
@@ -175,7 +168,7 @@ that triggered it, and the relevant terminal error. Never include the API key or
 | --- | --- |
 | `index.html` | Retro layout, deck controls, note input, and review/save form. |
 | `styles.css` | Wood case, teal index, cream cards, responsive layout, and dialog styling. |
-| `app.js` | Speech recognition, card rendering, search/index navigation, and localStorage. |
+| `app.js` | Typed note capture, profile review, exact-name merge/update, card rendering, search/index navigation, and localStorage. |
 | `profile-api.mjs` | Profile request, timeout, response validation, and distinct service-error messages. |
 | `server.py` | Serves public assets, loads environment configuration, validates requests, and calls Gemini. |
 | `start.ps1` | Windows startup and Python-test launcher; keeps the application attached to the terminal. |
@@ -185,9 +178,7 @@ that triggered it, and the relevant terminal error. Never include the API key or
 | `test_profile_api.mjs` | JavaScript tests for valid results, wrong servers, invalid data, and connection errors. |
 | `browser_fixture.py` | Explicit test-only simulated Gemini server on port 8001. |
 
-The browser's speech-recognition service transcribes the voice; it needs browser support,
-microphone permission, and generally internet access. Unsupported browsers can still use typed notes.
-The browser sends the text to Python's `POST /api/profile`. Python sends the note to Gemini
+The browser sends the typed note to Python's `POST /api/profile`. Python sends the note to Gemini
 over HTTPS, requests a JSON schema, validates the result, and returns fields for review.
 Unknown details stay empty. Gender is never inferred from pronouns, name, voice, or appearance.
 The key stays on the backend; the web server serves only an explicit list of public files.
@@ -226,32 +217,29 @@ Live Gemini extraction was verified with the team's local key using Gemini 3.1 F
 the real browser flow extracted Jamie Rivera and Casey Morgan, saved both cards, and
 found Jamie by appearance after a reload. The original
 3.8 Flash configuration timed out; Flash-Lite with the bounded output passed the live test.
-Actual microphone transcription still requires a spoken browser test.
 To rehearse, run this full demo twice:
 
 1. Introduce the old rolodex: a physical memory aid for the people you meet.
-2. Add a person and dictate: “I met Jamie Rivera at the Rexburg hackathon. They use they/them pronouns,
+2. Add a person and type: “I met Jamie Rivera at the Rexburg hackathon. They use they/them pronouns,
    wear red glasses, and won a robotics contest last summer.”
 3. Extract with Gemini and verify name, meeting place, appearance, pronouns, and memorable event.
 4. Save the card, find it using the index or appearance search, and reload to show it remains saved.
-5. Explain: “We reinvented yesterday's rolodex to turn a spoken memory into a card for today.”
+5. Explain: “We reinvented yesterday's rolodex to turn a remembered detail into a card for today.”
 
 ## Main-branch conflict resolution
 
 The integration of `origin/main` at `cc4699b` preserves the working Rolodexi deck,
-Gemini profile endpoint, dictation/review dialog, and detailed setup instructions.
+Gemini profile endpoint, typed review dialog, exact-name merge, and detailed setup instructions.
 Main contained previously committed conflict markers in `app.js` and `styles.css`
 from combining the original Folio grid with the retro deck. Its HTML also replaced
 the deck elements with old capture controls while JavaScript still expected the deck.
 These incompatible fragments were removed rather than carried into the working app.
 The Rolodexi title and AI-powered page description are retained.
 
-The older main-branch `AGENTS.md` described OpenAI, automatic contact merging, and
-explaining only on request. Those instructions were superseded by the team’s explicit
-Gemini selection, requirement to explain each step, and current create/review/save demo.
-Automatic contact merging remains unimplemented; this integration does not add it.
+The older main-branch `AGENTS.md` described OpenAI and a different capture flow. The
+current implementation keeps Gemini, typed capture, exact normalized-name merging,
+and the update-by-name dialog. “Maya” and “Maya Chen” are intentionally separate.
 The team’s earlier work remains available in Git history.
 
 The merge is performed on `ezraAiUse2.0` so the integration can be reviewed and tested
 before merging its pull request into `main`. Do not force-push over another teammate’s work.
->>>>>>> 1b7b261419e23858ba766a3c04f390ed6a056d83
