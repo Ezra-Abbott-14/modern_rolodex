@@ -2,9 +2,8 @@
 
 iHack 2026: reinvent the physical rolodex for people who struggle to remember new acquaintances.
 Type a short memory, let Gemini extract the details, review the results, and file a new card.
-The wood case, teal index, cream cards, and deck navigation follow the team's design on main.
-Each card also includes a short “Street Valley · human take” so the person feels like a real
-connection rather than only a role, company, or set of contact fields.
+The wood case, teal index, cream cards, and deck navigation preserve the original Rolodex design.
+Street Valley is a separate animated village below the card deck.
 
 ## Start locally
 

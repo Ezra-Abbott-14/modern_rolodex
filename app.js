@@ -121,32 +121,6 @@ const seed = [
   }
 ];
 
-const STREET_VALLEY_LINES = {
-  'maya rodriguez': 'Creative brain, neighborhood energy — she makes the room feel less like a pitch and more like a place to belong.',
-  'maya': 'Artist energy with a real-world calendar — the kind of person who turns a gallery plan into a reason to reconnect.',
-  'maya chen': 'A thoughtful designer who can make a big idea feel like a conversation over coffee.',
-  'jon bell': 'The friend who remembers your breakfast order and turns a five-minute coffee into a real check-in.',
-  'priya shah': 'Sharp questions, warm follow-through — she wants the honest version, then helps make it useful.',
-  'theo martin': 'Chases good light and quiet roads; the camera is just how he stays curious.',
-  'willow brooks': 'Soft-spoken maker energy, with strong opinions about soup and the tiny objects that make a home.',
-  'avery chen': 'Balcony-garden optimist; will hand you a tomato and a plan before you can say you are too busy.',
-  'omar patel': 'Bookshop neighbor who turns a recommendation into a conversation and remembers what you were looking for.',
-  'nina kim': 'Sees the funny little creature in everyone; her eye for old design makes ordinary things feel alive.',
-  'elliot james': 'Collects the sounds most people walk past, because he knows a city is made of small moments.'
-};
-
-const DEFAULT_GENDERS = {
-  'maya rodriguez': 'female',
-  'maya chen': 'female',
-  'maya': 'female',
-  'jon bell': 'male',
-  'priya shah': 'female',
-  'theo martin': 'male',
-  'willow brooks': 'female',
-  'omar patel': 'male',
-  'nina kim': 'female'
-};
-
 let people = loadPeople();
 let activeLetter = 'ALL';
 let deckIndex = 0;
@@ -176,53 +150,6 @@ function normalizeName(value) {
 function samePerson(first, second) {
   const firstKey = normalizeName(first);
   return firstKey !== '' && firstKey === normalizeName(second);
-}
-
-function getPersonGender(person) {
-  return person.gender === undefined
-    ? DEFAULT_GENDERS[normalizeName(person.name)] || ''
-    : person.gender;
-}
-
-function getGenderClass(person) {
-  const gender = normalizeName(getPersonGender(person));
-  if (gender === 'male' || gender === 'man') return 'male';
-  if (gender === 'female' || gender === 'woman') return 'female';
-  return 'human';
-}
-
-function trimSentence(value) {
-  return String(value || '').trim().replace(/[.!?]+$/, '');
-}
-
-function getStreetValleyLine(person) {
-  const knownLine = person.streetValley || STREET_VALLEY_LINES[normalizeName(person.name)];
-  if (knownLine) return knownLine;
-
-  const name = person.name.trim() || 'This person';
-  const role = person.role && !['New connection', '—'].includes(person.role.trim())
-    ? trimSentence(person.role)
-    : '';
-  const met = person.met && !['Somewhere interesting', '—'].includes(person.met.trim())
-    ? trimSentence(person.met)
-    : '';
-  const city = person.city && person.city.trim() !== '—' ? trimSentence(person.city) : '';
-  const memory = person.notes && person.notes !== 'Add a note next time you see them.'
-    ? trimSentence(person.notes.split('\n')[0])
-    : '';
-
-  const identity = role
-    ? `${name} is a real person before they are a ${role}`
-    : `${name} is more than a contact`;
-  const context = [
-    met ? `You met at ${met}` : '',
-    city ? `they are based in ${city}` : ''
-  ].filter(Boolean).join('; ');
-  const thread = memory
-    ? `The human thread to keep: “${memory}”`
-    : 'Keep the small detail that made you want to stay in touch';
-
-  return `${identity}.${context ? ` ${context}.` : ''} ${thread}.`;
 }
 
 function mergeUnique(first, second) {
@@ -362,15 +289,6 @@ function renderCard(person, position) {
       <div class="card-note">
         <div class="label">Remember this</div>
         ${escapeHtml(person.notes)}
-      </div>
-
-      <div class="street-valley-note ${getGenderClass(person)}">
-        <div class="street-valley-header">
-          <div class="street-valley-portrait ${getGenderClass(person)}" aria-hidden="true">
-            <span class="pixel-hair"></span><span class="pixel-face"></span><span class="pixel-eye left"></span><span class="pixel-eye right"></span><span class="pixel-body"></span><span class="pixel-shirt"></span>
-          </div>
-        </div>
-        <div class="street-valley-copy">${escapeHtml(getStreetValleyLine(person))}</div>
       </div>
 
       <div class="tags">${tags}</div>

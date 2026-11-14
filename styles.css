@@ -580,27 +580,6 @@ dialog { max-height:90vh; overflow:auto; }
 .card-number { position:relative; bottom:auto; left:auto; margin-top:20px; }
 .memory-details { margin-top:16px; font-size:11px; line-height:1.6; }
 .memory-details p { margin:8px 0; white-space:pre-line; }
-.street-valley-note { position:relative; overflow:hidden; margin-top:20px; padding:17px 18px 18px; border:2px solid var(--rust); border-left-width:8px; background:linear-gradient(135deg,#fff4c9 0%,#ffe6b5 100%); color:#59475d; font:12px/1.6 'DM Mono',monospace; box-shadow:7px 7px 0 #b55b5833; }
-.street-valley-header { display:flex; align-items:center; gap:12px; margin-bottom:13px; }
-.street-valley-portrait { position:relative; flex:0 0 72px; width:72px; height:72px; overflow:hidden; border:3px solid #59475d; border-radius:6px; background:#8bc4a1; box-shadow:inset 0 0 0 3px #f8d889, 4px 4px 0 #59475d55; image-rendering:pixelated; }
-.street-valley-portrait.female { background:#e8a98e; }
-.street-valley-portrait.male { background:#79b8c2; }
-.street-valley-portrait.human { background:#d7bd7c; }
-.street-valley-portrait:after { content:''; position:absolute; inset:7px; border:2px solid #ffffff55; pointer-events:none; }
-.pixel-face, .pixel-hair, .pixel-body, .pixel-shirt, .pixel-eye { position:absolute; display:block; }
-.pixel-face { z-index:2; top:22px; left:25px; width:21px; height:21px; background:#f1bc8d; box-shadow:3px 3px 0 #c97963; }
-.pixel-hair { z-index:3; top:14px; left:21px; width:29px; height:13px; background:#3c2a36; box-shadow:-4px 6px 0 #3c2a36, 25px 7px 0 #3c2a36; }
-.female .pixel-hair { top:12px; left:18px; width:35px; height:17px; background:#5a3040; box-shadow:-4px 8px 0 #5a3040, 32px 8px 0 #5a3040, 0 12px 0 #5a3040; }
-.pixel-eye { z-index:4; top:32px; width:3px; height:3px; background:#2f2839; }
-.pixel-eye.left { left:31px; }
-.pixel-eye.right { left:40px; }
-.pixel-body { z-index:1; bottom:-3px; left:13px; width:45px; height:31px; background:#3c7273; box-shadow:-5px 8px 0 #3c7273, 5px 8px 0 #3c7273; }
-.female .pixel-body { background:#b55b58; box-shadow:-5px 8px 0 #b55b58, 5px 8px 0 #b55b58; }
-.human .pixel-body { background:#7b6b57; box-shadow:-5px 8px 0 #7b6b57, 5px 8px 0 #7b6b57; }
-.pixel-shirt { z-index:2; bottom:4px; left:29px; width:13px; height:18px; background:#f2c45a; }
-.male .pixel-shirt { background:#e8a34a; }
-.human .pixel-shirt { background:#b9d38a; }
-.street-valley-copy { max-width:90%; font-size:12px; font-weight:600; }
 .app-status { color:var(--teal); font-size:11px; text-align:center; }
 
 /* ---------- Street Valley pixel village ---------- */
