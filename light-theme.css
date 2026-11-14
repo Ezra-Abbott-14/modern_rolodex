@@ -1896,3 +1896,110 @@ body {
     transition:none;
   }
 }
+
+/* Final cascade guard: keep the opening animation above the older archive
+   motion rules so the live page follows the designed R-to-ROLODEXI sequence. */
+.intro-loader-frame {
+  animation:introSurfaceIn .8s cubic-bezier(.2,.8,.2,1) both;
+}
+
+.intro-loader .intro-loader-orbit {
+  inset:0;
+  top:auto;
+  right:auto;
+  width:auto;
+  height:auto;
+  animation:none !important;
+}
+
+.intro-loader .intro-loader-orbit .orbit-mark {
+  left:50%;
+  top:50%;
+  width:auto;
+  height:auto;
+  border:0;
+  border-radius:0;
+  background:transparent;
+  color:#1d3552;
+  font:700 clamp(220px,72vw,980px)/.72 'Helvetica Neue',Helvetica,Arial,sans-serif;
+  box-shadow:none;
+  animation:introRJourney 6.2s cubic-bezier(.2,.78,.2,1) both !important;
+}
+
+.intro-loader .orbit-rail {
+  top:50%;
+  left:7%;
+  width:86%;
+  background:linear-gradient(90deg,transparent,#6d9aa5 16%,#6d9aa5 84%,transparent);
+  animation:introRailJourney 6.2s ease-in-out both !important;
+}
+
+.intro-loader .ring-one {
+  animation:introRingJourneyOne 6.2s cubic-bezier(.2,.75,.2,1) both !important;
+}
+
+.intro-loader .ring-two {
+  animation:introRingJourneyTwo 6.2s cubic-bezier(.2,.75,.2,1) both !important;
+}
+
+.intro-loader .intro-loader-character {
+  animation:introCharacterFollow 6.2s cubic-bezier(.2,.75,.2,1) both !important;
+}
+
+.intro-loader .intro-loader-wordmark {
+  top:50%;
+  left:7%;
+  transform:translateY(-50%) scale(.72);
+  transform-origin:left center;
+  animation:introWordmarkLift 6.2s cubic-bezier(.2,.8,.2,1) both !important;
+}
+
+.intro-loader .intro-loader-about {
+  animation:introAboutReveal 6.2s ease-in-out both !important;
+}
+
+.intro-loader .intro-loader-copy {
+  animation:introCopyReveal 6.2s cubic-bezier(.2,.8,.2,1) both !important;
+}
+
+.intro-loader .intro-pointer {
+  animation:introPointerOpen 6.2s cubic-bezier(.2,.75,.2,1) both !important;
+}
+
+.intro-loader .intro-pointer:after {
+  animation:introPointerClick 6.2s ease-in-out both !important;
+}
+
+.intro-loader .intro-blue-corner {
+  animation:introCornerReveal 6.2s ease-in-out both !important;
+}
+
+@media (prefers-reduced-motion:reduce) {
+  .intro-loader-frame,
+  .intro-loader .intro-loader-orbit,
+  .intro-loader .orbit-rail,
+  .intro-loader .ring-one,
+  .intro-loader .ring-two,
+  .intro-loader .orbit-mark,
+  .intro-loader .intro-loader-character,
+  .intro-loader .intro-loader-wordmark,
+  .intro-loader .intro-loader-about,
+  .intro-loader .intro-loader-copy,
+  .intro-loader .intro-pointer,
+  .intro-loader .intro-pointer:after,
+  .intro-loader .intro-blue-corner {
+    animation:none !important;
+  }
+
+  .intro-loader .orbit-mark {
+    opacity:1;
+    transform:translate(-50%,-50%) scale(.55);
+  }
+
+  .intro-loader .intro-loader-wordmark,
+  .intro-loader .intro-loader-about,
+  .intro-loader .intro-loader-copy {
+    opacity:1;
+    transform:none;
+  }
+}
