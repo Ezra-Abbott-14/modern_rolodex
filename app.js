@@ -165,10 +165,38 @@ function samePerson(first, second) {
   return firstKey !== '' && firstKey === normalizeName(second);
 }
 
+function trimSentence(value) {
+  return String(value || '').trim().replace(/[.!?]+$/, '');
+}
+
 function getStreetValleyLine(person) {
-  return person.streetValley
-    || STREET_VALLEY_LINES[normalizeName(person.name)]
-    || `${person.name} is more than a role in a contact list — remember the small detail that made you want to stay in touch.`;
+  const knownLine = person.streetValley || STREET_VALLEY_LINES[normalizeName(person.name)];
+  if (knownLine) return knownLine;
+
+  const name = person.name.trim() || 'This person';
+  const role = person.role && !['New connection', '—'].includes(person.role.trim())
+    ? trimSentence(person.role)
+    : '';
+  const met = person.met && !['Somewhere interesting', '—'].includes(person.met.trim())
+    ? trimSentence(person.met)
+    : '';
+  const city = person.city && person.city.trim() !== '—' ? trimSentence(person.city) : '';
+  const memory = person.notes && person.notes !== 'Add a note next time you see them.'
+    ? trimSentence(person.notes.split('\n')[0])
+    : '';
+
+  const identity = role
+    ? `${name} is a real person before they are a ${role}`
+    : `${name} is more than a contact`;
+  const context = [
+    met ? `You met at ${met}` : '',
+    city ? `they are based in ${city}` : ''
+  ].filter(Boolean).join('; ');
+  const thread = memory
+    ? `The human thread to keep: “${memory}”`
+    : 'Keep the small detail that made you want to stay in touch';
+
+  return `${identity}.${context ? ` ${context}.` : ''} ${thread}.`;
 }
 
 function mergeUnique(first, second) {
