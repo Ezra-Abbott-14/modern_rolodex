@@ -1,13 +1,16 @@
 // Keep transport errors separate from Gemini errors and invalid response data.
 export async function extractProfile(note, fetcher = globalThis.fetch, page = globalThis.location) {
   const wrongServer = () => Object.assign(new Error(
-    'This page is not connected to the Rolodexi backend. Open http://localhost:8000 instead of Live Server (port 5500) or index.html directly. Your note has not been cleared.'
+    'This page is a static preview. Open http://localhost:8000 instead of Live Server (port 5500). Your note has not been cleared.'
   ), {code: 'WRONG_SERVER'});
   if (page?.protocol === 'file:') throw wrongServer();
   // VS Code Live Server serves the UI only. Route its API call to Python.
   const liveServer = page?.protocol === 'http:' && page.port === '5500'
     && ['localhost', '127.0.0.1'].includes(page.hostname);
   const endpoint = liveServer ? `http://${page.hostname}:8000/api/profile` : '/api/profile';
+  const staticPreview = page?.protocol === 'http:' && page?.port && page.port !== '8000';
+  const endpoint = page?.protocol === 'file:' ? 'http://localhost:8000/api/profile' : '/api/profile';
+  if (staticPreview) throw wrongServer();
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 45000);
   try {
@@ -21,7 +24,7 @@ export async function extractProfile(note, fetcher = globalThis.fetch, page = gl
       if (controller.signal.aborted || error.name === 'AbortError' || error.name === 'TimeoutError') {
         throw new Error('Profile extraction timed out. Your note is still here; please retry.');
       }
-      throw Object.assign(new Error('The Rolodexi backend could not be reached. Keep the terminal running with ./start.ps1 or python server.py, then retry. Your note is still here.'), {code:'BACKEND_UNREACHABLE'});
+      throw Object.assign(new Error('The Rolodexi backend could not be reached. Keep the terminal running with ./start.ps1 or python server.py, then retry. Your note is still here.'), {code: 'BACKEND_UNREACHABLE'});
     }
     if (!response.headers.get('content-type')?.includes('application/json')) throw wrongServer();
     let payload;

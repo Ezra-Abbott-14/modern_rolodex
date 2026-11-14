@@ -1,3 +1,4 @@
+import { initStreetValleyWorld } from './street_valley_world.js';
 import { extractProfile } from './profile-api.mjs';
 
 const seed = [
@@ -125,6 +126,8 @@ let activeLetter = 'ALL';
 let deckIndex = 0;
 let visiblePeople = sortByLastName(people);
 let dragStart = null;
+let wheelDelta = 0;
+let wheelLocked = false;
 
 const $ = selector => document.querySelector(selector);
 
@@ -138,6 +141,36 @@ function loadPeople() {
 
 function savePeople() {
   localStorage.setItem('retro-rolodex', JSON.stringify(people));
+}
+
+function normalizeName(value) {
+  return String(value || '').toLowerCase().replace(/[^a-z0-9 ]/g, '').replace(/\s+/g, ' ').trim();
+}
+
+function samePerson(first, second) {
+  const firstKey = normalizeName(first);
+  return firstKey !== '' && firstKey === normalizeName(second);
+}
+
+function mergeUnique(first, second) {
+  return [...new Set([...(first || []), ...(second || [])].map(value => String(value).trim()).filter(Boolean))];
+}
+
+function mergePerson(existing, incoming) {
+  for (const field of ['role', 'met', 'city', 'phone', 'email', 'appearance', 'gender', 'pronouns']) {
+    if (incoming[field] && incoming[field] !== '—' && incoming[field] !== 'New connection' && incoming[field] !== 'Somewhere interesting') {
+      existing[field] = incoming[field];
+    }
+  }
+  if (incoming.notes && incoming.notes !== 'Add a note next time you see them.') {
+    const oldNotes = String(existing.notes || '');
+    if (!oldNotes.toLowerCase().includes(incoming.notes.toLowerCase())) {
+      existing.notes = oldNotes ? `${oldNotes}\n• ${incoming.notes}` : incoming.notes;
+    }
+  }
+  existing.events = mergeUnique(existing.events, incoming.events);
+  existing.tags = mergeUnique(existing.tags, incoming.tags);
+  return existing;
 }
 
 function escapeHtml(value) {
@@ -366,7 +399,13 @@ $('#search').oninput = () => {
 
 $('#deckWindow').addEventListener('wheel', event => {
   event.preventDefault();
-  moveDeck(event.deltaY > 0 ? 1 : -1);
+  if (wheelLocked) return;
+  wheelDelta += event.deltaY;
+  if (Math.abs(wheelDelta) < 100) return;
+  moveDeck(wheelDelta > 0 ? 1 : -1);
+  wheelDelta = 0;
+  wheelLocked = true;
+  window.setTimeout(() => { wheelLocked = false; }, 550);
 }, { passive: false });
 
 document.addEventListener('keydown', event => {
@@ -389,7 +428,7 @@ $('#deckWindow').addEventListener('pointerup', event => {
 
 $('#addBtn').onclick = () => {
   $('#personForm').reset();
-  setCaptureStatus('Dictate or type, extract the details, then review and save below.');
+  setCaptureStatus('Type a note, extract the details, then review and save below.');
   $('#personDialog').showModal();
 };
 
@@ -405,7 +444,9 @@ $('#personForm').onsubmit = event => {
   const person = buildPerson(new FormData(event.target));
   if (!person.name) return setCaptureStatus('Please enter the person’s name.', true);
   const previousPeople = [...people];
-  people.push(person);
+  const existing = people.find(item => samePerson(item.name, person.name));
+  const savedPerson = existing ? mergePerson(existing, person) : person;
+  if (!existing) people.push(person);
   try {
     savePeople();
   } catch {
@@ -415,18 +456,16 @@ $('#personForm').onsubmit = event => {
   }
   activeLetter = 'ALL';
   $('#search').value = '';
-  deckIndex = sortByLastName(people).findIndex(item => item.id === person.id);
+  deckIndex = sortByLastName(people).findIndex(item => item.id === savedPerson.id);
 
   $('#personDialog').close();
   render();
+  setCaptureStatus(existing ? `${existing.name} updated — new information was added to the same card.` : `${person.name} added.`);
 };
 
 $('#exportBtn').onclick = exportPeople;
 
 let extracting = false;
-let recognition;
-let listening = false;
-let noteBeforeRecording = '';
 
 function setCaptureStatus(message, error = false) {
   $('#serviceHelp').hidden = true;
@@ -434,59 +473,13 @@ function setCaptureStatus(message, error = false) {
   $('#captureStatus').classList.toggle('error', error);
 }
 
-const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-if (SpeechRecognition) {
-  recognition = new SpeechRecognition();
-  recognition.lang = 'en-US';
-  recognition.continuous = true;
-  recognition.interimResults = true;
-  recognition.onresult = event => {
-    const words = Array.from(event.results).map(result => result[0].transcript).join(' ');
-    $('#meetingNote').value = [noteBeforeRecording, words].filter(Boolean).join(' ').slice(0, 8000);
-  };
-  recognition.onerror = event => {
-    setCaptureStatus(event.error === 'not-allowed'
-      ? 'Microphone access was denied. Allow it in your browser or type your note.'
-      : 'Dictation stopped. Check your microphone and connection, or type your note.', true);
-  };
-  recognition.onend = () => {
-    listening = false;
-    $('#recordBtn').textContent = '● Dictate a note';
-    $('#recordBtn').setAttribute('aria-pressed', 'false');
-  };
-} else {
-  $('#recordBtn').disabled = true;
-  $('#recordBtn').title = 'Use Chrome or Edge for dictation, or type your note.';
-}
-
-$('#recordBtn').onclick = () => {
-  if (!recognition) return;
-  if (listening) return recognition.stop();
-  noteBeforeRecording = $('#meetingNote').value.trim();
-  try {
-    recognition.start();
-    listening = true;
-    $('#recordBtn').textContent = '■ Stop dictation';
-    $('#recordBtn').setAttribute('aria-pressed', 'true');
-    setCaptureStatus('Listening… tell us their name and the details you want to remember.');
-  } catch {
-    setCaptureStatus('Could not start dictation. Try again or type your note.', true);
-  }
-};
-
-$('#personDialog').addEventListener('close', () => {
-  if (listening) recognition.stop();
-});
-
 $('#generateBtn').onclick = async () => {
   if (extracting) return;
   const note = $('#meetingNote').value.trim();
-  if (!note) return setCaptureStatus('Dictate or type a note before extracting a profile.', true);
-  if (listening) recognition.stop();
+  if (!note) return setCaptureStatus('Type a note before extracting a profile.', true);
   extracting = true;
   $('#cancelBtn').disabled = true;
   $('#generateBtn').disabled = true;
-  $('#recordBtn').disabled = true;
   $('#meetingNote').readOnly = true;
   $('#personForm .modal-actions button:last-child').disabled = true;
   $('#generateBtn').textContent = 'Extracting…';
@@ -506,11 +499,79 @@ $('#generateBtn').onclick = async () => {
     extracting = false;
     $('#cancelBtn').disabled = false;
     $('#generateBtn').disabled = false;
-    $('#recordBtn').disabled = !recognition;
     $('#meetingNote').readOnly = false;
     $('#personForm .modal-actions button:last-child').disabled = false;
     $('#generateBtn').textContent = 'Extract profile';
   }
 };
 
+function populateUpdateNames() {
+  const select = $('#updateName');
+  select.replaceChildren();
+  sortByLastName(people).forEach(person => {
+    const option = document.createElement('option');
+    option.value = person.name;
+    option.textContent = person.name;
+    select.append(option);
+  });
+  loadUpdateFields();
+}
+
+function loadUpdateFields() {
+  const person = people.find(item => samePerson(item.name, $('#updateName').value));
+  if (!person) return;
+  document.querySelectorAll('[data-update-value]').forEach(input => {
+    const field = input.dataset.updateValue;
+    input.value = field === 'tags'
+      ? (person.tags || []).join(', ')
+      : field === 'events'
+        ? (person.events || []).join('\n')
+        : person[field] || '';
+    input.disabled = true;
+    const checkbox = document.querySelector(`[data-field="${field}"]`);
+    if (checkbox) checkbox.checked = false;
+  });
+}
+
+$('#updateBtn').onclick = () => {
+  if (!people.length) return;
+  populateUpdateNames();
+  $('#updateDialog').showModal();
+};
+
+$('#cancelUpdateBtn').onclick = () => $('#updateDialog').close();
+$('#updateName').onchange = loadUpdateFields;
+document.querySelectorAll('[data-field]').forEach(checkbox => {
+  checkbox.onchange = () => {
+    const input = document.querySelector(`[data-update-value="${checkbox.dataset.field}"]`);
+    if (input) input.disabled = !checkbox.checked;
+  };
+});
+
+$('#updateForm').onsubmit = event => {
+  event.preventDefault();
+  const person = people.find(item => samePerson(item.name, $('#updateName').value));
+  const selected = [...event.target.querySelectorAll('[data-field]:checked')];
+  if (!person) return;
+  if (!selected.length) return window.alert('Select at least one field to update.');
+  selected.forEach(checkbox => {
+    const field = checkbox.dataset.field;
+    const input = event.target.querySelector(`[data-update-value="${field}"]`);
+    if (field === 'tags') person.tags = input.value.split(',').map(value => value.trim()).filter(Boolean);
+    else if (field === 'events') person.events = input.value.split('\n').map(value => value.trim()).filter(Boolean);
+    else person[field] = input.value.trim();
+  });
+  savePeople();
+  $('#updateDialog').close();
+  activeLetter = 'ALL';
+  $('#search').value = '';
+  deckIndex = sortByLastName(people).findIndex(item => item.id === person.id);
+  render();
+};
+
 render();
+
+initStreetValleyWorld({
+  canvas: document.querySelector('#streetValleyCanvas'),
+  getContacts: () => people
+});
