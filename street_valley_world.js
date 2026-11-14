@@ -167,10 +167,11 @@ function createActor(character, index, contact = null) {
     speed: character.walkSpeed * 1.7,
     scale: 2,
     walkFrame: index % 2,
-    nextTurn: 800 + index * 137,
+    direction: index % 2 === 0 ? 1 : -1,
+    nextTurn: 0,
+    idleUntil: 0,
+    resting: false,
     opacity: contact ? 1 : 0.92,
-    wanderPhase: index * 1.71,
-    wanderCount: 0
   };
 }
 
@@ -201,21 +202,37 @@ export function initStreetValleyWorld({ canvas, getContacts }) {
     if (countLabel) countLabel.textContent = `${STREET_VALLEY_CHARACTERS.length} villagers · ${contacts.length} Rolodex connections`;
   }
 
-  function chooseNextTarget(actor) {
-    actor.wanderCount += 1;
-    actor.wanderPhase += 0.9 + Math.random() * 0.8;
-    const radius = 85 + Math.random() * 105;
-    actor.targetX = clamp(actor.homeX + Math.cos(actor.wanderPhase) * radius, 45, width - 45);
-    actor.targetY = clamp(actor.homeY + Math.sin(actor.wanderPhase) * 42 + (Math.random() - 0.5) * 24, 270, 380);
-    actor.nextTurn = 1500 + Math.random() * 2800;
+  function chooseNextTarget(actor, now) {
+    if (actor.x <= 60) actor.direction = 1;
+    else if (actor.x >= width - 60) actor.direction = -1;
+    else actor.direction = Math.random() < 0.5 ? -1 : 1;
+
+    const travelDistance = 120 + Math.random() * 240;
+    actor.targetX = clamp(actor.x + actor.direction * travelDistance, 45, width - 45);
+    actor.targetY = clamp(actor.homeY + (Math.random() - 0.5) * 34, 270, 380);
+    actor.nextTurn = now + 2800 + Math.random() * 3200;
   }
 
   function updateActors(delta, now) {
     actors.forEach(actor => {
+      if (actor.resting) {
+        if (actor.idleUntil > now) {
+          actor.walkFrame = 0;
+          return;
+        }
+        actor.resting = false;
+        chooseNextTarget(actor, now);
+      }
       const distanceX = actor.targetX - actor.x;
       const distanceY = actor.targetY - actor.y;
       const distance = Math.hypot(distanceX, distanceY);
-      if (distance < 3 || now > actor.nextTurn) chooseNextTarget(actor);
+      if (distance < 4) {
+        actor.resting = true;
+        actor.idleUntil = now + 450 + Math.random() * 1400;
+        actor.walkFrame = 0;
+        return;
+      }
+      if (now > actor.nextTurn) chooseNextTarget(actor, now);
       const directionX = (actor.targetX - actor.x) / Math.max(distance, 1);
       const directionY = (actor.targetY - actor.y) / Math.max(distance, 1);
       let separationX = 0;
