@@ -1,24 +1,5 @@
-<<<<<<< HEAD
-const transcript = document.querySelector('#transcript');
-const generateButton = document.querySelector('#generateButton');
-const profileGrid = document.querySelector('#profileGrid');
-const profileCount = document.querySelector('#profileCount');
-const captureHint = document.querySelector('#captureHint');
-const toast = document.querySelector('#toast');
-const searchInput = document.querySelector('#searchInput');
-const manualPanel = document.querySelector('#manualPanel');
-const manualForm = document.querySelector('#manualForm');
-const closeManualButton = document.querySelector('#closeManualButton');
-const manualTrigger = document.querySelector('#manualTrigger');
+import { extractProfile } from './profile-api.mjs';
 
-const STORAGE_KEY = 'folio-contacts-v1';
-let sortMode = 'all';
-
-const seedContacts = [
-  { name: 'Maya Chen', where: 'Met at the Saturday market', facts: ['Artist', 'First gallery show is in October.'], tag: 'CREATIVE SPARK', color: 'coral', meta: 'She / her' },
-  { name: 'Jon Bell', where: 'Introduced by Nora at Bloom', facts: ['Training for his first half marathon.'], tag: 'GOOD ENERGY', color: 'blue', meta: 'He / him' },
-  { name: 'Amara Lewis', where: 'On the train to Portland', facts: ['Knows the best tiny bookstores.'], tag: 'THE CONNECTOR', color: 'yellow', meta: 'She / her' },
-=======
 const seed = [
   {
     id: 1,
@@ -137,7 +118,6 @@ const seed = [
     avatar: 'EJ',
     tone: 'gold'
   }
->>>>>>> d224744b696f5e66fac191d4e9d8d09289b1642a
 ];
 
 let people = loadPeople();
@@ -149,7 +129,11 @@ let dragStart = null;
 const $ = selector => document.querySelector(selector);
 
 function loadPeople() {
-  return JSON.parse(localStorage.getItem('retro-rolodex') || 'null') || seed;
+  try {
+    const saved = JSON.parse(localStorage.getItem('retro-rolodex') || 'null');
+    if (Array.isArray(saved) && saved.every(person => person && typeof person.name === 'string' && person.name.trim() && Array.isArray(person.tags))) return saved;
+  } catch { /* Recover gracefully from unavailable or corrupted storage. */ }
+  return structuredClone(seed);
 }
 
 function savePeople() {
@@ -190,6 +174,10 @@ function getFilteredPeople() {
       person.met,
       person.city,
       person.notes,
+      person.appearance,
+      person.gender,
+      person.pronouns,
+      ...(person.events || []),
       ...person.tags
     ].join(' ').toLowerCase();
 
@@ -234,7 +222,7 @@ function renderCard(person, position) {
 
   return `
     <article class="contact-card ${stackClass}">
-      <div class="card-tab">${firstLetter}</div>
+      <div class="card-tab">${escapeHtml(firstLetter)}</div>
 
       <div class="card-header">
         <div class="avatar ${getToneClass(person)}">${escapeHtml(person.avatar)}</div>
@@ -271,7 +259,13 @@ function renderCard(person, position) {
       </div>
 
       <div class="tags">${tags}</div>
-      <div class="card-number">CARD ${String(person.id).padStart(2, '0')} · LAST NAME: ${lastName}</div>
+      <div class="memory-details">
+        ${person.appearance ? `<p><span class="label">Appearance</span><br>${escapeHtml(person.appearance)}</p>` : ''}
+        ${person.gender ? `<p><span class="label">Gender</span><br>${escapeHtml(person.gender)}</p>` : ''}
+        ${person.pronouns ? `<p><span class="label">Pronouns</span><br>${escapeHtml(person.pronouns)}</p>` : ''}
+        ${person.events?.length ? `<p><span class="label">Memorable events</span><br>${person.events.map(escapeHtml).join('<br>')}</p>` : ''}
+      </div>
+      <div class="card-number">CARD ${escapeHtml(String(person.id))} · LAST NAME: ${escapeHtml(lastName)}</div>
     </article>`;
 }
 
@@ -282,6 +276,8 @@ function renderDeck() {
     $('#cardStack').innerHTML = '<div class="empty-card">No cards match this stack.<br />Try a different letter or add someone new.</div>';
     $('#count').textContent = '0 cards';
     $('#position').textContent = '';
+    $('#prevBtn').disabled = true;
+    $('#nextBtn').disabled = true;
     return;
   }
 
@@ -338,6 +334,10 @@ function buildPerson(form) {
     phone: form.get('phone') || '—',
     email: form.get('email') || '—',
     notes: form.get('notes') || 'Add a note next time you see them.',
+    appearance: form.get('appearance') || '',
+    gender: form.get('gender') || '',
+    pronouns: form.get('pronouns') || '',
+    events: (form.get('events') || '').split('\n').map(value => value.trim()).filter(Boolean),
     tags,
     avatar: name.split(' ').map(part => part[0]).join('').slice(0, 2).toUpperCase(),
     tone: ['teal', 'rust', 'gold'][people.length % 3]
@@ -364,60 +364,13 @@ $('#search').oninput = () => {
   renderDeck();
 };
 
-<<<<<<< HEAD
-const extract = (text, patterns, fallback) => {
-  for (const pattern of patterns) { const match = text.match(pattern); if (match) return clean(match[1]); }
-  return fallback;
-};
-const extractName = (text) => {
-  const afterIntro = text.match(/(?:about|met|named)\s+(.+)/i)?.[1] || text;
-  const words = afterIntro.match(/[A-Za-z]+/g) || [];
-  const stopWords = new Set(['at', 'on', 'in', 'through', 'during', 'is', 'was', 'go', 'goes', 'went', 'works', 'lives', 'said', 'has', 'and']);
-  if (!words[0]) return 'New connection';
-  return words[1] && !stopWords.has(words[1].toLowerCase()) ? `${words[0]} ${words[1]}` : words[0];
-};
-const parseCapture = (text) => {
-  const name = extractName(text);
-  const where = extract(text, [/(?:at|on|through|during)\s+([^.!?]+)/i], 'A memorable first meeting');
-  const fact = extract(text, [/(?:told me|mentioned|remember that|is|works as|works at|go(?:es)? to|went to)\s+([^.!?]+)/i], text.replace(new RegExp(`^${name}\\s*`, 'i'), ''));
-  return { name, where, facts: [fact] };
-};
-
-generateButton.addEventListener('click', async () => {
-  const text = transcript.value.trim();
-  if (!text) return showToast('Add a voice note or a few details first.');
-  const fallback = parseCapture(text);
-  generateButton.disabled = true;
-  captureHint.textContent = 'AI is matching this note and organizing the profile…';
-  try {
-    await saveWithAI(text, fallback);
-  } catch (error) {
-    addContact(fallback);
-    showToast(`Saved locally — AI is unavailable right now.`);
-    console.warn(error);
-  } finally {
-    generateButton.disabled = false;
-    captureHint.textContent = 'Voice notes become an organized profile in seconds.';
-    transcript.value = '';
-  }
-});
-
-searchInput.addEventListener('input', render);
-document.querySelectorAll('.filter:not(.manual-trigger)').forEach((filter) => filter.addEventListener('click', () => {
-  document.querySelectorAll('.filter').forEach((item) => item.classList.remove('active'));
-  filter.classList.add('active');
-  sortMode = filter.textContent === 'A–Z' ? 'az' : filter.textContent === 'Recently added' ? 'recent' : 'all';
-  render();
-}));
-manualForm.addEventListener('submit', async (event) => {
-=======
 $('#deckWindow').addEventListener('wheel', event => {
->>>>>>> d224744b696f5e66fac191d4e9d8d09289b1642a
   event.preventDefault();
   moveDeck(event.deltaY > 0 ? 1 : -1);
 }, { passive: false });
 
 document.addEventListener('keydown', event => {
+  if ($('#personDialog').open || /INPUT|TEXTAREA/.test(event.target.tagName)) return;
   if (event.key === 'ArrowRight') moveDeck(1);
   if (event.key === 'ArrowLeft') moveDeck(-1);
 });
@@ -436,24 +389,128 @@ $('#deckWindow').addEventListener('pointerup', event => {
 
 $('#addBtn').onclick = () => {
   $('#personForm').reset();
+  setCaptureStatus('Dictate or type, extract the details, then review and save below.');
   $('#personDialog').showModal();
 };
 
 $('#cancelBtn').onclick = () => $('#personDialog').close();
+$('#personDialog').addEventListener('cancel', event => {
+  if (extracting) event.preventDefault();
+});
 
 $('#personForm').onsubmit = event => {
   event.preventDefault();
 
+  if (extracting) return;
   const person = buildPerson(new FormData(event.target));
+  if (!person.name) return setCaptureStatus('Please enter the person’s name.', true);
+  const previousPeople = [...people];
   people.push(person);
+  try {
+    savePeople();
+  } catch {
+    people = previousPeople;
+    setCaptureStatus('Your browser could not save this card. Export existing cards or free browser storage, then retry.', true);
+    return;
+  }
   activeLetter = 'ALL';
+  $('#search').value = '';
   deckIndex = sortByLastName(people).findIndex(item => item.id === person.id);
 
-  savePeople();
   $('#personDialog').close();
   render();
 };
 
 $('#exportBtn').onclick = exportPeople;
+
+let extracting = false;
+let recognition;
+let listening = false;
+let noteBeforeRecording = '';
+
+function setCaptureStatus(message, error = false) {
+  $('#serviceHelp').hidden = true;
+  $('#captureStatus').textContent = message;
+  $('#captureStatus').classList.toggle('error', error);
+}
+
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+if (SpeechRecognition) {
+  recognition = new SpeechRecognition();
+  recognition.lang = 'en-US';
+  recognition.continuous = true;
+  recognition.interimResults = true;
+  recognition.onresult = event => {
+    const words = Array.from(event.results).map(result => result[0].transcript).join(' ');
+    $('#meetingNote').value = [noteBeforeRecording, words].filter(Boolean).join(' ').slice(0, 8000);
+  };
+  recognition.onerror = event => {
+    setCaptureStatus(event.error === 'not-allowed'
+      ? 'Microphone access was denied. Allow it in your browser or type your note.'
+      : 'Dictation stopped. Check your microphone and connection, or type your note.', true);
+  };
+  recognition.onend = () => {
+    listening = false;
+    $('#recordBtn').textContent = '● Dictate a note';
+    $('#recordBtn').setAttribute('aria-pressed', 'false');
+  };
+} else {
+  $('#recordBtn').disabled = true;
+  $('#recordBtn').title = 'Use Chrome or Edge for dictation, or type your note.';
+}
+
+$('#recordBtn').onclick = () => {
+  if (!recognition) return;
+  if (listening) return recognition.stop();
+  noteBeforeRecording = $('#meetingNote').value.trim();
+  try {
+    recognition.start();
+    listening = true;
+    $('#recordBtn').textContent = '■ Stop dictation';
+    $('#recordBtn').setAttribute('aria-pressed', 'true');
+    setCaptureStatus('Listening… tell us their name and the details you want to remember.');
+  } catch {
+    setCaptureStatus('Could not start dictation. Try again or type your note.', true);
+  }
+};
+
+$('#personDialog').addEventListener('close', () => {
+  if (listening) recognition.stop();
+});
+
+$('#generateBtn').onclick = async () => {
+  if (extracting) return;
+  const note = $('#meetingNote').value.trim();
+  if (!note) return setCaptureStatus('Dictate or type a note before extracting a profile.', true);
+  if (listening) recognition.stop();
+  extracting = true;
+  $('#cancelBtn').disabled = true;
+  $('#generateBtn').disabled = true;
+  $('#recordBtn').disabled = true;
+  $('#meetingNote').readOnly = true;
+  $('#personForm .modal-actions button:last-child').disabled = true;
+  $('#generateBtn').textContent = 'Extracting…';
+  setCaptureStatus('Finding the details in your memory…');
+  try {
+    const profile = await extractProfile(note);
+    for (const name of ['name', 'role', 'met', 'city', 'phone', 'email', 'notes', 'gender', 'pronouns', 'appearance']) {
+      $('#personForm').elements.namedItem(name).value = profile[name] || '';
+    }
+    $('#personForm').elements.namedItem('events').value = (profile.events || []).join('\n');
+    $('#personForm').elements.namedItem('tags').value = (profile.tags || []).join(', ');
+    setCaptureStatus('Details extracted with Gemini. Review them below, then save your card.');
+  } catch (error) {
+    setCaptureStatus(error.message, true);
+    $('#serviceHelp').hidden = error.code !== 'WRONG_SERVER';
+  } finally {
+    extracting = false;
+    $('#cancelBtn').disabled = false;
+    $('#generateBtn').disabled = false;
+    $('#recordBtn').disabled = !recognition;
+    $('#meetingNote').readOnly = false;
+    $('#personForm .modal-actions button:last-child').disabled = false;
+    $('#generateBtn').textContent = 'Extract profile';
+  }
+};
 
 render();

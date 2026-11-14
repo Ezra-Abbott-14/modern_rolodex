@@ -1,13 +1,10 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="A voice-first virtual rolodex for remembering the people you meet." />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="An AI-powered personal Rolodex for remembering the people you meet." />
     <title>Rolodexi</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="styles.css" />
   </head>
 
@@ -45,20 +42,16 @@
 
             <span class="count" id="count" aria-live="polite"></span>
           </div>
-          <span class="keyboard-hint">⌘ K</span>
-        </div>
-        <div class="voice-row">
-          <button class="record-button" id="recordButton" type="button" aria-label="Start voice capture">
-            <span class="mic-icon" aria-hidden="true">⌕</span>
-            <span class="record-label">Tap to speak</span>
-            <span class="record-wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
-          </button>
-          <div class="transcript-wrap">
-            <textarea id="transcript" rows="3" placeholder="“I met Maya at the Saturday market. She has a bright red bob and told me about her first gallery show...”" aria-label="Person details"></textarea>
-            <div class="capture-footer">
-              <span id="captureHint">AI will match this note to an existing person or create a new profile.</span>
-              <button class="generate-button" id="generateButton" type="button">Generate profile <span>↗</span></button>
-            </div>
+
+          <div class="deck-window" id="deckWindow">
+            <div class="card-stack" id="cardStack"></div>
+            <div class="spindle" aria-hidden="true"><span></span><b></b></div>
+          </div>
+
+          <div class="deck-controls">
+            <button class="flip" id="prevBtn">← Previous</button>
+            <div class="deck-position" id="position" aria-live="polite"></div>
+            <button class="flip" id="nextBtn">Next →</button>
           </div>
         </section>
       </section>
@@ -72,6 +65,18 @@
     <dialog id="personDialog">
       <form class="modal" id="personForm">
         <h2>Add a new card</h2>
+
+        <section class="voice-capture" aria-labelledby="voiceHeading">
+          <div class="eyebrow" id="voiceHeading">YESTERDAY’S ROLODEX. TODAY’S MEMORY.</div>
+          <label for="meetingNote">Tell us about someone you met</label>
+          <textarea id="meetingNote" maxlength="8000" placeholder="I met Jamie Rivera at the hackathon. They wear red glasses and won a robotics contest..."></textarea>
+          <div class="capture-actions">
+            <button type="button" class="ghost" id="recordBtn">● Dictate a note</button>
+            <button type="button" class="primary" id="generateBtn">Extract profile</button>
+          </div>
+          <p id="captureStatus" role="status" aria-live="polite">Dictate or type, extract the details, then review and save below.</p>
+          <p id="serviceHelp" hidden><a href="http://localhost:8000/" target="_blank" rel="noopener">Open the full Rolodexi app on port 8000 ↗</a><br>Copy your note first. This opens a new tab.</p>
+        </section>
 
         <div class="form-grid">
           <label>
@@ -110,6 +115,26 @@
           </label>
 
           <label class="field full">
+            Appearance
+            <textarea name="appearance" placeholder="Only the description you remember"></textarea>
+          </label>
+
+          <label>
+            Gender (if stated)
+            <input name="gender" />
+          </label>
+
+          <label>
+            Pronouns (if stated)
+            <input name="pronouns" />
+          </label>
+
+          <label class="field full">
+            Memorable events (one per line)
+            <textarea name="events"></textarea>
+          </label>
+
+          <label class="field full">
             Tags
             <input name="tags" placeholder="design, coffee, local (comma separated)" />
           </label>
@@ -122,6 +147,6 @@
       </form>
     </dialog>
 
-    <script src="app.js"></script>
+    <script type="module" src="app.js"></script>
   </body>
 </html>
