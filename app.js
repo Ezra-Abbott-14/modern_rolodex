@@ -4,7 +4,7 @@ import { extractProfile } from './profile-api.mjs';
 const introLoader = document.querySelector('#introLoader');
 if (introLoader) {
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const introDuration = reducedMotion ? 250 : 5800;
+  const introDuration = reducedMotion ? 250 : 6200;
   window.setTimeout(() => {
     introLoader.classList.add('is-done');
     introLoader.setAttribute('aria-hidden', 'true');
@@ -594,12 +594,74 @@ aboutDialog.addEventListener('click', event => {
   if (event.target === aboutDialog) aboutDialog.close();
 });
 
+const whyCopy = $('[data-why-copy]');
+const whyTitle = $('[data-why-title]');
+const whyDetail = $('[data-why-detail]');
+const whyTabs = document.querySelectorAll('[data-why-tab]');
+const whyContent = {
+  remember: {
+    copy: 'Rolodexi reinvents the old card file as a quiet place to save the small detail you want to remember next time.',
+    title: 'One person.<br />One living card.',
+    detail: 'Where you met.<br />What to pick up.'
+  },
+  organize: {
+    copy: 'A typed memory becomes one clear profile, so Maya and Maya Chen stay distinct while every Maya note stays together.',
+    title: 'Scattered notes.<br />One thread.',
+    detail: 'AI organizes.<br />You stay in control.'
+  },
+  return: {
+    copy: 'Search by name, place, or the detail you remember, then return to the conversation with something real to say.',
+    title: 'Find the thread.<br />Pick it up again.',
+    detail: 'Search the archive.<br />Make it personal.'
+  }
+};
+
+whyTabs.forEach(tab => {
+  tab.onclick = () => {
+    const content = whyContent[tab.dataset.whyTab];
+    if (!content) return;
+    whyTabs.forEach(item => {
+      const active = item === tab;
+      item.classList.toggle('is-active', active);
+      item.setAttribute('aria-selected', String(active));
+    });
+    whyCopy.innerHTML = `${content.copy}`;
+    whyTitle.innerHTML = content.title;
+    whyDetail.innerHTML = content.detail;
+  };
+});
+
 const videoShell = $('#memoryVideoShell');
-if (videoShell && 'IntersectionObserver' in window) {
-  const videoObserver = new IntersectionObserver(([entry]) => {
-    videoShell.classList.toggle('is-expanded', entry.isIntersecting && entry.intersectionRatio > .35);
-  }, { threshold: [.35] });
-  videoObserver.observe(videoShell);
+let videoFrameRequested = false;
+function updateVideoExpansion() {
+  if (!videoShell) return;
+  const rect = videoShell.getBoundingClientRect();
+  const viewport = window.innerHeight;
+  const start = viewport * .92;
+  const end = viewport * .22;
+  const progress = Math.max(0, Math.min(1, (start - rect.top) / (start - end)));
+  const minWidth = Math.min(860, window.innerWidth - 48);
+  const maxWidth = Math.min(window.innerWidth - 24, 1400);
+  const width = minWidth + (maxWidth - minWidth) * progress;
+  videoShell.style.width = `${width}px`;
+  videoShell.style.marginLeft = '50%';
+  videoShell.style.transform = 'translateX(-50%)';
+  videoShell.style.borderRadius = `${26 - (6 * progress)}px`;
+  videoShell.style.setProperty('--video-progress', progress.toFixed(3));
+  videoShell.classList.toggle('is-expanded', progress > .72);
+  videoFrameRequested = false;
+}
+
+function requestVideoExpansion() {
+  if (videoFrameRequested) return;
+  videoFrameRequested = true;
+  window.requestAnimationFrame(updateVideoExpansion);
+}
+
+if (videoShell) {
+  window.addEventListener('scroll', requestVideoExpansion, { passive: true });
+  window.addEventListener('resize', requestVideoExpansion);
+  requestVideoExpansion();
 }
 
 const memoryVideo = $('#memoryVideo');
