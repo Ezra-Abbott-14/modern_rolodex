@@ -1177,3 +1177,131 @@ textarea,
 }
 
 }
+
+/* ---------- Editorial navigation layout ---------- */
+.topbar {
+  display:grid;
+  grid-template-columns:1fr auto 1fr;
+  align-items:center;
+  gap:24px;
+}
+
+.topbar-meta {
+  grid-column:1;
+}
+
+.topbar h1 {
+  grid-column:2;
+  grid-row:1;
+  margin:0;
+  white-space:nowrap;
+}
+
+.top-actions {
+  grid-column:3;
+  justify-content:flex-end;
+}
+
+.rolodex {
+  display:flex;
+  flex-direction:column;
+  min-height:0;
+  border:0;
+  background:transparent;
+}
+
+.index-panel {
+  display:flex;
+  align-items:center;
+  gap:20px;
+  min-height:64px;
+  border:1px solid #aaa2ca;
+  border-radius:0;
+  padding:10px 16px;
+}
+
+.index {
+  display:flex;
+  flex:1;
+  gap:2px;
+  max-height:none;
+  margin:0;
+  overflow:auto;
+  scrollbar-width:thin;
+}
+
+.index-hint {
+  display:none;
+}
+
+.tab {
+  flex:0 0 auto;
+  min-width:30px;
+  text-align:center;
+}
+
+.machine {
+  min-height:700px;
+  border:1px solid #6d8f91;
+  border-top:0;
+  border-radius:0;
+  padding:24px 30px 28px;
+}
+
+.machine-top {
+  border-bottom:1px solid #a5c7bd;
+  padding-bottom:16px;
+}
+
+.deck-window {
+  min-height:620px;
+}
+
+.card-stack {
+  width:min(820px,94%);
+}
+
+.contact-card {
+  padding:50px 62px 42px 70px;
+}
+
+.street-valley-world {
+  margin-top:42px;
+}
+
+@media (max-width:760px) {
+  .topbar {
+    display:flex;
+    align-items:flex-start;
+    flex-direction:column;
+  }
+
+  .topbar-meta,
+  .topbar h1,
+  .top-actions {
+    width:100%;
+  }
+
+  .topbar h1 {
+    order:2;
+  }
+
+  .top-actions {
+    order:3;
+    justify-content:flex-start;
+  }
+
+  .index-panel {
+    align-items:stretch;
+    gap:8px;
+    padding:10px;
+  }
+
+  .machine {
+    padding:20px 16px 24px;
+  }
+
+  .contact-card {
+    padding:38px 35px 34px 44px;
+  }
+}
