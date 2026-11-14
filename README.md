@@ -1,5 +1,5 @@
 # modern_rolodex
-Ihack 2026 entry
+Ihack 2026 entry — an AI-powered personal Rolodex
 
 ## Run the AI version
 

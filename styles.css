@@ -19,7 +19,7 @@ button { cursor:pointer; }
 .capture-header, .section-heading, .capture-footer, .card-top { display:flex; justify-content:space-between; align-items:flex-start; }
 h2 { margin:9px 0 0; font-size:27px; letter-spacing:-.06em; }
 .keyboard-hint { padding:7px 10px; border:1px solid var(--line); border-radius:3px; color:var(--muted); font:11px 'DM Mono', monospace; }
-.voice-row { display:flex; gap:20px; margin-top:28px; }
+.voice-row { display:flex; gap:20px; margin-top:28px; }.text-only-capture .transcript-wrap { width:100%; }
 .record-button { min-width:213px; min-height:148px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; border:1px solid var(--ink); border-radius:3px; color:var(--ink); background:var(--green); transition:.2s; }
 .record-button:hover, .record-button.recording { transform:translateY(-2px); background:#c8e6b5; }
 .mic-icon { font-size:29px; transform:rotate(-45deg); line-height:.7; }

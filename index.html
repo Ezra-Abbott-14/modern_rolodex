@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="A voice-first virtual rolodex for remembering the people you meet." />
+    <meta name="description" content="An AI-powered virtual rolodex for remembering the people you meet." />
     <title>Folio — Your people, remembered</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -37,12 +37,7 @@
           </div>
           <span class="keyboard-hint">⌘ K</span>
         </div>
-        <div class="voice-row">
-          <button class="record-button" id="recordButton" type="button" aria-label="Start voice capture">
-            <span class="mic-icon" aria-hidden="true">⌕</span>
-            <span class="record-label">Tap to speak</span>
-            <span class="record-wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
-          </button>
+        <div class="voice-row text-only-capture">
           <div class="transcript-wrap">
             <textarea id="transcript" rows="3" placeholder="“I met Maya at the Saturday market. She has a bright red bob and told me about her first gallery show...”" aria-label="Person details"></textarea>
             <div class="capture-footer">

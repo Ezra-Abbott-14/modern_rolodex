@@ -1,4 +1,3 @@
-const recordButton = document.querySelector('#recordButton');
 const transcript = document.querySelector('#transcript');
 const generateButton = document.querySelector('#generateButton');
 const profileGrid = document.querySelector('#profileGrid');
@@ -12,8 +11,6 @@ const closeManualButton = document.querySelector('#closeManualButton');
 const manualTrigger = document.querySelector('#manualTrigger');
 
 const STORAGE_KEY = 'folio-contacts-v1';
-let recognition;
-let listening = false;
 let sortMode = 'all';
 
 const seedContacts = [
@@ -163,28 +160,6 @@ const saveWithAI = async (note, fallback) => {
   render();
   showToast(previous ? `${updated.name} updated by AI.` : `${updated.name} was added by AI.`);
 };
-
-if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  recognition = new SpeechRecognition();
-  recognition.continuous = true;
-  recognition.interimResults = true;
-  recognition.lang = 'en-US';
-  recognition.onresult = (event) => { transcript.value = Array.from(event.results).map((result) => result[0].transcript).join(''); };
-  recognition.onend = () => { listening = false; recordButton.classList.remove('recording'); recordButton.querySelector('.record-label').textContent = 'Tap to speak'; captureHint.textContent = 'Voice note captured. Ready to make a profile?'; };
-  recognition.onerror = () => showToast('I couldn’t hear that. Try again or type your note.');
-} else captureHint.textContent = 'Voice input is not supported here, but you can type your note.';
-
-recordButton.addEventListener('click', () => {
-  if (!recognition) return showToast('Voice input is not supported by this browser.');
-  if (listening) return recognition.stop();
-  transcript.focus();
-  recognition.start();
-  listening = true;
-  recordButton.classList.add('recording');
-  recordButton.querySelector('.record-label').textContent = 'Listening…';
-  captureHint.textContent = 'Speak naturally — I’ll keep the important details.';
-});
 
 const extract = (text, patterns, fallback) => {
   for (const pattern of patterns) { const match = text.match(pattern); if (match) return clean(match[1]); }
