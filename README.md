@@ -169,6 +169,8 @@ that triggered it, and the relevant terminal error. Never include the API key or
 | `index.html` | Retro layout, deck controls, note input, and review/save form. |
 | `styles.css` | Wood case, teal index, cream cards, responsive layout, and dialog styling. |
 | `app.js` | Typed note capture, profile review, exact-name merge/update, card rendering, search/index navigation, and localStorage. |
+| `street_valley_characters.js` | 100 original pixel-villager data definitions with gender, palette, job, favorite place, and walking speed. |
+| `street_valley_world.js` | Code-drawn canvas village where Rolodex contacts and ambient villagers automatically wander. |
 | `profile-api.mjs` | Profile request, timeout, response validation, and distinct service-error messages. |
 | `server.py` | Serves public assets, loads environment configuration, validates requests, and calls Gemini. |
 | `start.ps1` | Windows startup and Python-test launcher; keeps the application attached to the terminal. |
@@ -212,6 +214,11 @@ that check the actual page, form, save behavior, and reload persistence.
 After implementation changes, run both suites, then use the browser for the full flow.
 For this error fix, also reproduce extraction on port 5500: it should preserve the note
 and display the correct-port message and recovery link instead of the old generic error.
+
+The Street Valley scene is original code art inspired by the team's pixel-farming-game
+references. It does not bundle copied game sprites. Adding a contact syncs that person
+into the village; their selected gender chooses a matching character palette, while
+unspecified contacts receive a neutral villager.
 
 Live Gemini extraction was verified with the team's local key using Gemini 3.1 Flash-Lite:
 the real browser flow extracted Jamie Rivera and Casey Morgan, saved both cards, and

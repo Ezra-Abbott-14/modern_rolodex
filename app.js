@@ -1,3 +1,4 @@
+import { initStreetValleyWorld } from './street_valley_world.js';
 import { extractProfile } from './profile-api.mjs';
 
 const seed = [
@@ -657,3 +658,8 @@ $('#updateForm').onsubmit = event => {
 };
 
 render();
+
+initStreetValleyWorld({
+  canvas: document.querySelector('#streetValleyCanvas'),
+  getContacts: () => people
+});
