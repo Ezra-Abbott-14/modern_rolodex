@@ -428,7 +428,7 @@ $('#deckWindow').addEventListener('pointerup', event => {
 
 $('#addBtn').onclick = () => {
   $('#personForm').reset();
-  setCaptureStatus('Type a note, extract the details, then review and save below.');
+  setCaptureStatus('Add a note, organize the details, then review and save below.');
   $('#personDialog').showModal();
 };
 
@@ -476,14 +476,14 @@ function setCaptureStatus(message, error = false) {
 $('#generateBtn').onclick = async () => {
   if (extracting) return;
   const note = $('#meetingNote').value.trim();
-  if (!note) return setCaptureStatus('Type a note before extracting a profile.', true);
+  if (!note) return setCaptureStatus('Add a note before organizing it.', true);
   extracting = true;
   $('#cancelBtn').disabled = true;
   $('#generateBtn').disabled = true;
   $('#meetingNote').readOnly = true;
   $('#personForm .modal-actions button:last-child').disabled = true;
   $('#generateBtn').textContent = 'Extracting…';
-  setCaptureStatus('Finding the details in your memory…');
+  setCaptureStatus('Organizing your note…');
   try {
     const profile = await extractProfile(note);
     for (const name of ['name', 'role', 'met', 'city', 'phone', 'email', 'notes', 'gender', 'pronouns', 'appearance']) {
@@ -491,7 +491,7 @@ $('#generateBtn').onclick = async () => {
     }
     $('#personForm').elements.namedItem('events').value = (profile.events || []).join('\n');
     $('#personForm').elements.namedItem('tags').value = (profile.tags || []).join(', ');
-    setCaptureStatus('Details extracted with Gemini. Review them below, then save your card.');
+    setCaptureStatus('Details organized. Review them below, then save your card.');
   } catch (error) {
     setCaptureStatus(error.message, true);
     $('#serviceHelp').hidden = !['WRONG_SERVER', 'BACKEND_UNREACHABLE'].includes(error.code);
@@ -501,7 +501,7 @@ $('#generateBtn').onclick = async () => {
     $('#generateBtn').disabled = false;
     $('#meetingNote').readOnly = false;
     $('#personForm .modal-actions button:last-child').disabled = false;
-    $('#generateBtn').textContent = 'Extract profile';
+    $('#generateBtn').textContent = 'Organize note';
   }
 };
 

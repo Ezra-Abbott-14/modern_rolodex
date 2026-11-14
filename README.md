@@ -2,7 +2,7 @@
 
 iHack 2026: reinvent the physical rolodex for people who struggle to remember new acquaintances.
 Type a short memory, let Gemini extract the details, review the results, and file a new card.
-The wood case, teal index, cream cards, and deck navigation preserve the original Rolodex design.
+The restrained editorial layout, dark deck, cream cards, and simple navigation keep the Rolodex practical and professional.
 Street Valley is a separate animated village below the card deck.
 
 ## Start locally
@@ -167,7 +167,7 @@ that triggered it, and the relevant terminal error. Never include the API key or
 | File | Responsibility |
 | --- | --- |
 | `index.html` | Retro layout, deck controls, note input, and review/save form. |
-| `styles.css` | Wood case, teal index, cream cards, responsive layout, and dialog styling. |
+| `styles.css` | Editorial layout, dark deck, cream cards, responsive layout, and dialog styling. |
 | `app.js` | Typed note capture, profile review, exact-name merge/update, card rendering, search/index navigation, and localStorage. |
 | `street_valley_characters.js` | 100 original pixel-villager data definitions with gender, palette, job, favorite place, and walking speed. |
 | `street_valley_world.js` | Code-drawn canvas village where Rolodex contacts and ambient villagers automatically wander. |
@@ -241,7 +241,7 @@ Main contained previously committed conflict markers in `app.js` and `styles.css
 from combining the original Folio grid with the retro deck. Its HTML also replaced
 the deck elements with old capture controls while JavaScript still expected the deck.
 These incompatible fragments were removed rather than carried into the working app.
-The Rolodexi title and AI-powered page description are retained.
+The Rolodexi title and quiet note-organization flow are retained.
 
 The older main-branch `AGENTS.md` described OpenAI and a different capture flow. The
 current implementation keeps Gemini, typed capture, exact normalized-name merging,
