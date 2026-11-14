@@ -4,10 +4,12 @@ import { extractProfile } from './profile-api.mjs';
 const introLoader = document.querySelector('#introLoader');
 if (introLoader) {
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const introDuration = reducedMotion ? 250 : 6200;
+  const introDuration = reducedMotion ? 250 : 6700;
   window.setTimeout(() => {
     introLoader.classList.add('is-done');
     introLoader.setAttribute('aria-hidden', 'true');
+    document.body.classList.add('animation-done');
+    document.body.classList.remove('animation-lock');
     window.setTimeout(() => introLoader.remove(), 700);
   }, introDuration);
 }
@@ -631,45 +633,34 @@ whyTabs.forEach(tab => {
   };
 });
 
-const videoShell = $('#memoryVideoShell');
-let videoFrameRequested = false;
-function updateVideoExpansion() {
-  if (!videoShell) return;
-  const rect = videoShell.getBoundingClientRect();
-  const viewport = window.innerHeight;
-  const start = viewport * .92;
-  const end = viewport * .22;
-  const progress = Math.max(0, Math.min(1, (start - rect.top) / (start - end)));
-  const minWidth = Math.min(860, window.innerWidth - 48);
-  const maxWidth = Math.min(window.innerWidth - 24, 1400);
-  const width = minWidth + (maxWidth - minWidth) * progress;
-  videoShell.style.width = `${width}px`;
-  videoShell.style.marginLeft = '50%';
-  videoShell.style.transform = 'translateX(-50%)';
-  videoShell.style.borderRadius = `${26 - (6 * progress)}px`;
-  videoShell.style.setProperty('--video-progress', progress.toFixed(3));
-  videoShell.classList.toggle('is-expanded', progress > .72);
-  videoFrameRequested = false;
-}
+// Keep the ma prototype's movable-block interaction: the archive cards and
+// editorial bento cards gently follow the pointer, then settle back in place.
+const movableGroups = [
+  { parent: '.machine', items: '.contact-card', strength: 12 },
+  { parent: '.why-bento', items: '.why-bento-card', strength: 18 }
+];
 
-function requestVideoExpansion() {
-  if (videoFrameRequested) return;
-  videoFrameRequested = true;
-  window.requestAnimationFrame(updateVideoExpansion);
-}
-
-if (videoShell) {
-  window.addEventListener('scroll', requestVideoExpansion, { passive: true });
-  window.addEventListener('resize', requestVideoExpansion);
-  requestVideoExpansion();
-}
-
-const memoryVideo = $('#memoryVideo');
-const videoPrompt = $('#videoPrompt');
-if (memoryVideo && videoPrompt) {
-  memoryVideo.addEventListener('canplay', () => { videoPrompt.hidden = true; });
-  memoryVideo.addEventListener('error', () => { videoPrompt.hidden = false; });
-}
+movableGroups.forEach(({ parent, items, strength }) => {
+  const area = document.querySelector(parent);
+  if (!area) return;
+  area.addEventListener('pointermove', event => {
+    const rect = area.getBoundingClientRect();
+    const x = (event.clientX - rect.left) / rect.width - .5;
+    const y = (event.clientY - rect.top) / rect.height - .5;
+    [...area.querySelectorAll(items)].forEach((block, index) => {
+      const depth = Math.min(strength, 7) * (1 + index * .08);
+      const tilt = x * (index % 2 ? -.45 : .45);
+      block.classList.add('is-moving');
+      block.style.transform = `translate3d(${x * depth}px, ${y * depth}px, 0) rotate(${tilt}deg)`;
+    });
+  });
+  area.addEventListener('pointerleave', () => {
+    [...area.querySelectorAll(items)].forEach(block => {
+      block.classList.remove('is-moving');
+      block.style.transform = '';
+    });
+  });
+});
 
 render();
 

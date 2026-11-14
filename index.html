@@ -9,47 +9,13 @@
     <link rel="stylesheet" href="light-theme.css" />
   </head>
 
-  <body>
-    <div class="intro-loader" id="introLoader" role="status" aria-label="Loading Rolodexi">
-      <div class="intro-loader-frame">
-        <div class="intro-loader-topline">
-          <span>ROLODEXI / PERSONAL ARCHIVE</span>
-          <span>V.01 · 2026</span>
-        </div>
-        <div class="intro-loader-orbit" aria-hidden="true">
-          <span class="orbit-rail"></span>
-          <span class="orbit-ring ring-one"></span>
-          <span class="orbit-ring ring-two"></span>
-          <span class="orbit-dot dot-one"></span>
-          <span class="orbit-dot dot-two"></span>
-          <span class="orbit-mark">R</span>
-          <span class="intro-loader-character">
-            <i class="character-head"></i>
-            <i class="character-body"></i>
-            <i class="character-leg character-leg-left"></i>
-            <i class="character-leg character-leg-right"></i>
-          </span>
-        </div>
-        <div class="intro-loader-stage" aria-hidden="true">
-          <span>01 / ARRIVE</span>
-          <span>02 / FOLLOW</span>
-          <span>03 / OPEN</span>
-        </div>
-        <div class="intro-loader-wordmark" aria-hidden="true"><span>ROLO</span><b>DEXI</b></div>
-        <span class="intro-loader-about" aria-hidden="true">ABOUT / YOUR PEOPLE ↗</span>
-        <span class="intro-pointer" aria-hidden="true">↖</span>
-        <span class="intro-blue-corner" aria-hidden="true"></span>
-        <div class="intro-loader-copy">
-          <span>PEOPLE WORTH REMEMBERING</span>
-          <strong>Make the next<br />conversation easier.</strong>
-        </div>
-        <div class="intro-loader-bottomline">
-          <span>01</span>
-          <span class="intro-loader-rule"><i></i></span>
-          <span>OPENING ARCHIVE</span>
-        </div>
+  <body class="ma-ui animation-lock">
+    <section class="intro" id="introLoader" role="status" aria-label="Loading Rolodexi">
+      <div class="wordmark" aria-label="Rolodexi">
+        <span>R</span><span>O</span><span>L</span><span>O</span><span>D</span><span>E</span><span>X</span><span>I</span>
       </div>
-    </div>
+      <p class="intro-note">A living directory for the people, places, and details worth returning to.</p>
+    </section>
 
     <main class="app">
       <header class="topbar" id="siteNav">
@@ -70,6 +36,17 @@
           <button class="primary" id="addBtn" type="button">＋ Add person</button>
         </div>
       </header>
+
+      <section class="editorial-hero" id="top" aria-labelledby="editorialHeroHeading">
+        <div class="hero-kicker">A LIVING DIRECTORY / SINCE 2026</div>
+        <h2 id="editorialHeroHeading">People, places<br />and things worth<br /><em>returning to.</em></h2>
+        <div class="hero-bottom">
+          <p>A tactile index for the references that shape how we see, make, and remember.</p>
+          <a class="editorial-pill" href="#rolodexSection">Explore the index <span>↓</span></a>
+        </div>
+      </section>
+
+      <div class="editorial-ticker" aria-hidden="true"><span>PEOPLE ◆ PLACES ◆ OBJECTS ◆ NOTES ◆ PEOPLE ◆ PLACES ◆ OBJECTS ◆ NOTES ◆</span></div>
 
       <section class="rolodex" id="rolodexSection" aria-label="Digital Rolodex">
         <aside class="index-panel">
@@ -148,27 +125,6 @@
         </div>
         <div class="street-valley-canvas-wrap">
           <canvas id="streetValleyCanvas" width="900" height="420" aria-label="Animated Street Valley pixel village"></canvas>
-        </div>
-      </section>
-
-      <section class="memory-film" aria-labelledby="memoryFilmHeading">
-        <div class="memory-film-intro">
-          <div class="eyebrow">A SHORT FILM FOR THE PEOPLE YOU MEET</div>
-          <div>
-            <h2 id="memoryFilmHeading">Keep the thread.</h2>
-            <p>Drop in a demo video later. The frame grows as you arrive, like a memory taking the room.</p>
-          </div>
-        </div>
-        <div class="memory-video-shell" id="memoryVideoShell">
-          <video id="memoryVideo" class="memory-video" controls muted loop playsinline preload="metadata" poster="roladexi.jpg" aria-label="Optional Rolodexi demo video">
-            <source src="demo-video.mp4" type="video/mp4" />
-          </video>
-          <div class="video-prompt" id="videoPrompt">
-            <span>DEMO FILM / V.01</span>
-            <strong>Place your video here.</strong>
-            <small>Drop <code>demo-video.mp4</code> beside <code>server.py</code> to replace this frame.</small>
-          </div>
-          <div class="memory-film-caption"><span>ROLL 01</span><span>THE ARCHIVE IN MOTION</span><span>SCROLL TO ENLARGE ↗</span></div>
         </div>
       </section>
 
