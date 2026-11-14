@@ -3,8 +3,13 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+<<<<<<< HEAD
     <meta name="description" content="An AI-assisted personal Rolodex for remembering the people you meet." />
     <title>Rolodexi — Personal edition</title>
+=======
+    <meta name="description" content="An AI-powered personal Rolodex for remembering the people you meet." />
+    <title>Rolodexi</title>
+>>>>>>> 1b7b261419e23858ba766a3c04f390ed6a056d83
     <link rel="stylesheet" href="styles.css" />
   </head>
 
@@ -60,9 +65,15 @@
           </div>
 
           <div class="deck-controls">
+<<<<<<< HEAD
             <button class="flip" id="prevBtn" type="button">← Previous</button>
             <div class="deck-position" id="position" aria-live="polite"></div>
             <button class="flip" id="nextBtn" type="button">Next →</button>
+=======
+            <button class="flip" id="prevBtn">← Previous</button>
+            <div class="deck-position" id="position" aria-live="polite"></div>
+            <button class="flip" id="nextBtn">Next →</button>
+>>>>>>> 1b7b261419e23858ba766a3c04f390ed6a056d83
           </div>
         </section>
       </section>
@@ -73,6 +84,7 @@
     <dialog id="personDialog">
       <form class="modal" id="personForm">
         <h2>Add a new card</h2>
+<<<<<<< HEAD
         <div class="form-grid">
           <label>Full name<input name="name" required placeholder="e.g. Avery Chen" /></label>
           <label>Role / company<input name="role" placeholder="e.g. Designer at..." /></label>
@@ -82,6 +94,81 @@
           <label>Email<input name="email" type="email" placeholder="hello@example.com" /></label>
           <label class="field full">Notes<textarea name="notes" placeholder="What should you remember for next time?"></textarea></label>
           <label class="field full">Tags<input name="tags" placeholder="design, coffee, local (comma separated)" /></label>
+=======
+
+        <section class="voice-capture" aria-labelledby="voiceHeading">
+          <div class="eyebrow" id="voiceHeading">YESTERDAY’S ROLODEX. TODAY’S MEMORY.</div>
+          <label for="meetingNote">Tell us about someone you met</label>
+          <textarea id="meetingNote" maxlength="8000" placeholder="I met Jamie Rivera at the hackathon. They wear red glasses and won a robotics contest..."></textarea>
+          <div class="capture-actions">
+            <button type="button" class="ghost" id="recordBtn">● Dictate a note</button>
+            <button type="button" class="primary" id="generateBtn">Extract profile</button>
+          </div>
+          <p id="captureStatus" role="status" aria-live="polite">Dictate or type, extract the details, then review and save below.</p>
+          <p id="serviceHelp" hidden><a href="http://localhost:8000/" target="_blank" rel="noopener">Open the full Rolodexi app on port 8000 ↗</a><br>Copy your note first. This opens a new tab.</p>
+        </section>
+
+        <div class="form-grid">
+          <label>
+            Full name
+            <input name="name" required placeholder="e.g. Avery Chen" />
+          </label>
+
+          <label>
+            Role / company
+            <input name="role" placeholder="e.g. Designer at..." />
+          </label>
+
+          <label>
+            Where you met
+            <input name="met" placeholder="e.g. Saturday market" />
+          </label>
+
+          <label>
+            City
+            <input name="city" placeholder="e.g. Portland, OR" />
+          </label>
+
+          <label>
+            Phone
+            <input name="phone" placeholder="(555) 123-4567" />
+          </label>
+
+          <label>
+            Email
+            <input name="email" type="email" placeholder="hello@example.com" />
+          </label>
+
+          <label class="field full">
+            Notes
+            <textarea name="notes" placeholder="What should you remember for next time?"></textarea>
+          </label>
+
+          <label class="field full">
+            Appearance
+            <textarea name="appearance" placeholder="Only the description you remember"></textarea>
+          </label>
+
+          <label>
+            Gender (if stated)
+            <input name="gender" />
+          </label>
+
+          <label>
+            Pronouns (if stated)
+            <input name="pronouns" />
+          </label>
+
+          <label class="field full">
+            Memorable events (one per line)
+            <textarea name="events"></textarea>
+          </label>
+
+          <label class="field full">
+            Tags
+            <input name="tags" placeholder="design, coffee, local (comma separated)" />
+          </label>
+>>>>>>> 1b7b261419e23858ba766a3c04f390ed6a056d83
         </div>
         <div class="modal-actions">
           <button type="button" class="ghost" id="cancelBtn">Cancel</button>
@@ -90,6 +177,7 @@
       </form>
     </dialog>
 
+<<<<<<< HEAD
     <dialog id="updateDialog">
       <form class="modal" id="updateForm">
         <h2>Update a card</h2>
@@ -113,5 +201,8 @@
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
     <script src="app.js"></script>
+=======
+    <script type="module" src="app.js"></script>
+>>>>>>> 1b7b261419e23858ba766a3c04f390ed6a056d83
   </body>
 </html>

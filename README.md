@@ -1,27 +1,257 @@
-# modern_rolodex
-Ihack 2026 entry — an AI-powered personal Rolodex
+# Rolodexi
 
-## Run the AI version
+iHack 2026: reinvent the physical rolodex for people who struggle to remember new acquaintances.
+Dictate a short memory, let Gemini extract the details, review the results, and file a new card.
+The wood case, teal index, cream cards, and deck navigation follow the team's design on main.
 
-The AI merge endpoint lives in `server.py`. It keeps the API key off the browser and
-asks the Responses API for structured JSON: one matched contact, an updated summary,
-deduplicated facts, and the new information from the note.
+## Start locally
 
-1. Set your key in the terminal (do not paste it into `app.js`):
+### 1. Open a terminal in this project
 
-   ```sh
-   export OPENAI_API_KEY="your_api_key_here"
-   ```
+In VS Code, open the `modern_rolodex` folder and choose **Terminal → New Terminal**.
+On this team's Windows machine, run:
 
-2. Start the app:
+```powershell
+Set-Location 'C:\Users\EzraA\OneDrive\Desktop\modern_rolodex'
+```
 
-   ```sh
-   python3 server.py
-   ```
+All commands below assume that this folder is the terminal's current directory.
+The app needs Python 3.9 or newer and internet access for Gemini. No pip dependencies
+are required. Node.js is only needed for the JavaScript tests.
 
-3. Open [http://localhost:8000](http://localhost:8000).
+### 2. Configure the key once
 
+<<<<<<< HEAD
 When you add a note, the app sends the note and existing contact summaries to
 `POST /api/merge`. Exact names merge into one card: two “Maya” notes merge, while
 “Maya” and “Maya Chen” remain separate.
 If the server or AI is unavailable, the browser uses its local merge fallback.
+=======
+The team has already configured this machine's `.env`; skip copying if it exists.
+For a new teammate's machine, create a key in [Google AI Studio](https://aistudio.google.com/apikey),
+then run this command, which will not overwrite an existing `.env`:
+
+```powershell
+if (-not (Test-Path -LiteralPath .env)) { Copy-Item -LiteralPath .env.example -Destination .env }
+```
+
+Open `.env` locally in your editor and use this format:
+
+```dotenv
+GEMINI_API_KEY=put_your_real_key_here
+GEMINI_MODEL=gemini-3.1-flash-lite
+PORT=8000
+```
+
+Put the real key only in `.env`. `.env.example` is a tracked template and must keep
+its key blank. Never paste the key into a chat, a JavaScript file, or a Git commit.
+The server reads `.env` at startup; restart it after editing the file.
+If the same variable is already set in the terminal environment, that value takes
+precedence over `.env`. Check this when a model or key change appears to have no effect.
+
+### 3. Start the Python application
+
+In PowerShell, run:
+
+```powershell
+.\start.ps1
+```
+
+The launcher looks for `python` or `python3`, then tries the bundled runtime available
+in this Codex workspace. The bundled runtime is a convenience on this machine, not
+something another teammate can assume is installed. With a normal Python installation,
+you can instead run:
+
+```powershell
+python server.py
+```
+
+On macOS/Linux, use `python3 server.py`. A successful startup prints:
+
+```text
+Rolodexi: http://localhost:8000
+```
+
+Keep that terminal running while using the website. Closing it stops the backend,
+even if the website is still visible in a browser tab. If a traceback follows the
+startup message, the server did not start successfully; see troubleshooting below.
+
+### 4. Open the full app, not a static preview
+
+In Chrome or Edge, open [http://localhost:8000/](http://localhost:8000/).
+For this demo, consistently use that exact hostname and port.
+
+VS Code's **Go Live / Live Server** normally opens `http://127.0.0.1:5500/index.html`.
+That server can display the HTML/CSS/JavaScript, but it does not execute `server.py`.
+The Extract button requests `/api/profile` on the same server as the page. On port
+5500 it reaches Live Server, which has no Gemini endpoint. This was the confirmed
+cause of the team's reported “Could not reach the profile service” error.
+
+Do not use Live Server or double-click `index.html` for the end-to-end demo.
+Use the Python app on port 8000. Both the frontend and backend are served together.
+The updated error identifies a non-JSON/static-server response, preserves your note,
+and offers a link to the full application in a new tab.
+
+### 5. Check the backend before the presentation
+
+Open [http://localhost:8000/api/health](http://localhost:8000/api/health) or run:
+
+```powershell
+Invoke-RestMethod -Uri http://localhost:8000/api/health
+```
+
+Expect `configured: true` (a browser displays `{"configured": true}`). This confirms
+that the local server is running and loaded a nonempty key. It does not prove that
+the key has valid permissions, remaining quota, or that Gemini is reachable; test
+an extraction to verify those parts.
+
+### 6. Stop and restart cleanly
+
+To stop the app, focus its terminal and press **Ctrl+C**. Wait for the terminal
+prompt to return before running `.\start.ps1` again. Do not keep starting copies.
+The app rejects duplicate listeners on port 8000. If a server launched through a
+launcher remains running, first inspect the port rather than stopping every Python process:
+
+```powershell
+netstat -ano | Select-String ':8000'
+```
+
+Find the `LISTENING` row and its PID. In Task Manager's Details tab, verify that this
+is the Rolodexi Python process before ending it. Other Python processes may belong to
+unrelated work. Start one application instance afterward and check `/api/health` again.
+
+Click **Add person**, then **Dictate a note** and allow microphone access. Speak, click **Stop dictation**,
+and check the transcript. You can also type it. Click **Extract profile**, review/edit the fields,
+and **Save card**. Search matches names, notes, appearance, pronouns, and memorable events.
+Cards stay in this browser's localStorage; **Export cards** downloads a JSON backup.
+This is a local hackathon app, with no account login or cross-device sync.
+
+### A complete user interaction
+
+1. Click **Add person**. The top of the dialog contains the meeting note; the rest
+   contains editable profile fields. You can enter a card manually without Gemini.
+2. Click **Dictate a note**, allow microphone access if prompted, speak the person's
+   name and the details you remember, then click **Stop dictation**. Check and correct
+   the transcript before continuing. Alternatively, type the entire note.
+3. Click **Extract profile** once. While it runs, extraction/save controls are disabled
+   to avoid submitting overlapping work. The note is limited to 8,000 characters.
+4. Wait for “Details extracted with Gemini.” Review all fields and correct mistakes.
+   Unknown details are left blank; a name is required to save. Events use one line each.
+5. Click **Save card**. The new card appears at the front, and the search is cleared
+   so it is not hidden by an earlier query. Saving writes the card to this browser.
+6. Search for a name or appearance detail, then reload the page and search again.
+   The saved card should remain. Each save creates a card; existing people are not
+   automatically merged or deduplicated.
+
+Browser storage is specific to the browser profile, hostname, and port. Cards on
+`127.0.0.1:5500`, `127.0.0.1:8000`, and `localhost:8000` are separate collections.
+Switching URLs does not delete the previous collection. Use **Export cards** on the
+old URL to keep a backup; automatic import is not implemented. A private/incognito
+window or clearing site data may remove its saved cards.
+
+## Troubleshooting by symptom
+
+| Symptom | Meaning and next action |
+| --- | --- |
+| Page works, but extraction says to open port 8000 | Check the address bar. Open `http://localhost:8000/`, not Live Server on port 5500. Copy your note before switching tabs. |
+| Backend could not be reached | Keep the Python terminal open. Start `.\start.ps1`, check `/api/health`, and retry from the same app URL. A static page can remain visible after Python stops. |
+| Browser cannot open localhost:8000 | Python is stopped or failed to start. Read the terminal traceback; a printed startup URL alone is not enough if followed by an error. |
+| `configured: false` or Gemini is not configured | Check that the file is named `.env` exactly, is next to `server.py`, and contains a nonempty `GEMINI_API_KEY`. Restart the server. |
+| Access denied, rejected request, or unavailable model | Check the key/project/model in Google AI Studio. The live-tested configuration is `gemini-3.1-flash-lite`; account access can differ. |
+| Gemini quota is exhausted or busy | Wait and check the project's quota/billing in AI Studio. Avoid repeatedly pressing Extract. Manual card entry remains available. |
+| Extraction timed out | The note remains in the dialog. Check connectivity and retry once. Check `GEMINI_MODEL` if it was changed; the original 3.8 Flash configuration timed out during testing. |
+| Unreadable data / invalid profile | The service returned a response that does not match the expected format. Retry and report the exact message; this is distinguished from a connection failure. |
+| Dictation button is disabled | The browser does not expose speech recognition. Try current Chrome/Edge, or type the note to test extraction independently. |
+| Microphone access denied | Allow microphone access for the app in your browser, confirm the correct input device, then retry. Permissions can differ between localhost and 127.0.0.1. |
+| Cards appear to be missing | Return to the same browser profile, hostname, and port used to save them; check search and the active alphabet filter. |
+| Address already in use / WinError 10048 / WinError 10013 | Check for an existing Rolodexi instance on the port and stop that instance before restarting. Do not run multiple copies. |
+
+When reporting a problem, include the browser URL, exact on-screen error, the action
+that triggered it, and the relevant terminal error. Never include the API key or `.env` contents.
+
+## How it works
+
+| File | Responsibility |
+| --- | --- |
+| `index.html` | Retro layout, deck controls, note input, and review/save form. |
+| `styles.css` | Wood case, teal index, cream cards, responsive layout, and dialog styling. |
+| `app.js` | Speech recognition, card rendering, search/index navigation, and localStorage. |
+| `profile-api.mjs` | Profile request, timeout, response validation, and distinct service-error messages. |
+| `server.py` | Serves public assets, loads environment configuration, validates requests, and calls Gemini. |
+| `start.ps1` | Windows startup and Python-test launcher; keeps the application attached to the terminal. |
+| `.env.example` | Shareable configuration template with an empty API-key field. |
+| `.env` | Local secret configuration, excluded from Git and never served by Python. |
+| `test_server.py` | Python unit and HTTP integration tests with simulated upstream responses. |
+| `test_profile_api.mjs` | JavaScript tests for valid results, wrong servers, invalid data, and connection errors. |
+| `browser_fixture.py` | Explicit test-only simulated Gemini server on port 8001. |
+
+The browser's speech-recognition service transcribes the voice; it needs browser support,
+microphone permission, and generally internet access. Unsupported browsers can still use typed notes.
+The browser sends the text to Python's `POST /api/profile`. Python sends the note to Gemini
+over HTTPS, requests a JSON schema, validates the result, and returns fields for review.
+Unknown details stay empty. Gender is never inferred from pronouns, name, voice, or appearance.
+The key stays on the backend; the web server serves only an explicit list of public files.
+There is no pretend AI fallback: missing keys, network failures, and quota errors are shown clearly.
+Manual card entry remains available.
+
+`GEMINI_MODEL` is configurable and defaults to `gemini-3.1-flash-lite`; your project must have access
+and quota for the selected model. The implementation uses Google's supported REST
+`generateContent` endpoint with output capped at 2,048 tokens. `PORT` defaults to 8000.
+The server binds to this computer only and rejects duplicate listeners on the same port.
+
+## Tests and demo verification
+
+- `python -m unittest -v test_server.py` or Windows `./start.ps1 -Test`: unit and HTTP integration tests.
+- `node --check app.js`: JavaScript syntax check.
+- `node --test test_profile_api.mjs`: seven JavaScript request/response tests, including
+  the Live Server HTML error that caused the reported failure. No npm packages needed.
+- `python browser_fixture.py`: test-only server at http://localhost:8001 with simulated Gemini responses.
+  The normal app never enables this fixture. Do not present it as a real AI demo.
+- Automated browser checks performed: extract Jamie Rivera, review fields, save, extract Casey Morgan,
+  save again, search by appearance, verify empty search navigation, and reload to check persistence.
+  Also checked empty notes, a note with no name, and the normal server's missing-key response.
+- To repeat the browser checks against the fixture, use notes containing Jamie Rivera and Casey Morgan;
+  `unnamed` triggers a missing-name result. Only those test responses are supplied by the fixture.
+
+The Python suite currently has 11 tests. Tests simulate Gemini to make edge cases
+repeatable without spending API quota; they do not prove that Google's live API works.
+The frontend suite sends notes through a supplied test transport to check error
+classification and data handling. Browser tests are separate scripted interactions
+that check the actual page, form, save behavior, and reload persistence.
+After implementation changes, run both suites, then use the browser for the full flow.
+For this error fix, also reproduce extraction on port 5500: it should preserve the note
+and display the correct-port message and recovery link instead of the old generic error.
+
+Live Gemini extraction was verified with the team's local key using Gemini 3.1 Flash-Lite:
+the real browser flow extracted Jamie Rivera and Casey Morgan, saved both cards, and
+found Jamie by appearance after a reload. The original
+3.8 Flash configuration timed out; Flash-Lite with the bounded output passed the live test.
+Actual microphone transcription still requires a spoken browser test.
+To rehearse, run this full demo twice:
+
+1. Introduce the old rolodex: a physical memory aid for the people you meet.
+2. Add a person and dictate: “I met Jamie Rivera at the Rexburg hackathon. They use they/them pronouns,
+   wear red glasses, and won a robotics contest last summer.”
+3. Extract with Gemini and verify name, meeting place, appearance, pronouns, and memorable event.
+4. Save the card, find it using the index or appearance search, and reload to show it remains saved.
+5. Explain: “We reinvented yesterday's rolodex to turn a spoken memory into a card for today.”
+
+## Main-branch conflict resolution
+
+The integration of `origin/main` at `cc4699b` preserves the working Rolodexi deck,
+Gemini profile endpoint, dictation/review dialog, and detailed setup instructions.
+Main contained previously committed conflict markers in `app.js` and `styles.css`
+from combining the original Folio grid with the retro deck. Its HTML also replaced
+the deck elements with old capture controls while JavaScript still expected the deck.
+These incompatible fragments were removed rather than carried into the working app.
+The Rolodexi title and AI-powered page description are retained.
+
+The older main-branch `AGENTS.md` described OpenAI, automatic contact merging, and
+explaining only on request. Those instructions were superseded by the team’s explicit
+Gemini selection, requirement to explain each step, and current create/review/save demo.
+Automatic contact merging remains unimplemented; this integration does not add it.
+The team’s earlier work remains available in Git history.
+
+The merge is performed on `ezraAiUse2.0` so the integration can be reviewed and tested
+before merging its pull request into `main`. Do not force-push over another teammate’s work.
+>>>>>>> 1b7b261419e23858ba766a3c04f390ed6a056d83
