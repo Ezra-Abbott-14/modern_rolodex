@@ -1,3 +1,5 @@
+import { extractProfile } from './profile-api.mjs';
+
 const seed = [
   {
     id: 1,
@@ -427,6 +429,7 @@ let listening = false;
 let noteBeforeRecording = '';
 
 function setCaptureStatus(message, error = false) {
+  $('#serviceHelp').hidden = true;
   $('#captureStatus').textContent = message;
   $('#captureStatus').classList.toggle('error', error);
 }
@@ -489,14 +492,7 @@ $('#generateBtn').onclick = async () => {
   $('#generateBtn').textContent = 'Extracting…';
   setCaptureStatus('Finding the details in your memory…');
   try {
-    const response = await fetch('/api/profile', {
-      method: 'POST', headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({note}), signal: AbortSignal.timeout(45000)
-    });
-    const payload = await response.json();
-    if (!response.ok) throw new Error(payload.error || 'Extraction failed. Please try again.');
-    const profile = payload.profile;
-    if (!profile || typeof profile.name !== 'string' || !profile.name.trim()) throw new Error('No person was found. Please include their name.');
+    const profile = await extractProfile(note);
     for (const name of ['name', 'role', 'met', 'city', 'phone', 'email', 'notes', 'gender', 'pronouns', 'appearance']) {
       $('#personForm').elements.namedItem(name).value = profile[name] || '';
     }
@@ -504,8 +500,8 @@ $('#generateBtn').onclick = async () => {
     $('#personForm').elements.namedItem('tags').value = (profile.tags || []).join(', ');
     setCaptureStatus('Details extracted with Gemini. Review them below, then save your card.');
   } catch (error) {
-    setCaptureStatus(error.name === 'TimeoutError' ? 'Gemini took too long. Your note is still here; please retry.'
-      : error instanceof TypeError || error instanceof SyntaxError ? 'Could not reach the profile service. Start server.py and open localhost:8000.' : error.message, true);
+    setCaptureStatus(error.message, true);
+    $('#serviceHelp').hidden = error.code !== 'WRONG_SERVER';
   } finally {
     extracting = false;
     $('#cancelBtn').disabled = false;

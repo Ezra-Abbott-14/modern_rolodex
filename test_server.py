@@ -110,7 +110,7 @@ class HttpTests(unittest.TestCase):
             self.assertEqual(mocked.call_count, 2)
 
     def test_assets_and_secret_paths(self):
-        for path in ('/', '/app.js', '/styles.css'):
+        for path in ('/', '/app.js', '/styles.css', '/profile-api.mjs'):
             with urlopen(self.base + path) as response:
                 self.assertEqual(response.status, 200)
         for path in ('/.env', '/.git/config', '/server.py', '/test_server.py', '/../.env'):

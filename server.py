@@ -134,6 +134,7 @@ class RolodexHandler(BaseHTTPRequestHandler):
                   '/index.html': ('index.html', 'text/html; charset=utf-8'),
                   '/styles.css': ('styles.css', 'text/css; charset=utf-8'),
                   '/app.js': ('app.js', 'text/javascript; charset=utf-8'),
+                  '/profile-api.mjs': ('profile-api.mjs', 'text/javascript; charset=utf-8'),
                   '/roladexi.jpg': ('roladexi.jpg', 'image/jpeg')}
         asset = assets.get(self.path.split('?', 1)[0])
         if not asset or not (ROOT / asset[0]).is_file():
