@@ -17,8 +17,9 @@
         </div>
 
         <div class="top-actions">
-          <button class="ghost" id="exportBtn">Export cards</button>
-          <button class="primary" id="addBtn">＋ Add person</button>
+          <button class="ghost" id="exportBtn" type="button">Export cards</button>
+          <button class="ghost" id="updateBtn" type="button">Update card</button>
+          <button class="primary" id="addBtn" type="button">＋ Add person</button>
         </div>
       </header>
 
@@ -38,7 +39,10 @@
           </div>
 
           <div class="machine-top">
-            <span class="machine-brand">ROLODEXI <i>personal edition</i></span>
+            <span class="machine-brand">
+              ROLODEXI
+            </span>
+
             <label class="search">
               <span aria-hidden="true">⌕</span>
               <input id="search" type="search" placeholder="Find a person..." />
@@ -53,19 +57,36 @@
           </div>
 
           <div class="deck-controls">
-<<<<<<< HEAD
-            <button class="flip" id="prevBtn" type="button">← Previous</button>
-            <div class="deck-position" id="position" aria-live="polite"></div>
-            <button class="flip" id="nextBtn" type="button">Next →</button>
-=======
+            <span class="control-prong" aria-hidden="true"></span>
             <button class="flip" id="prevBtn">← Previous</button>
             <div class="deck-position" id="position" aria-live="polite"></div>
             <button class="flip" id="nextBtn">Next →</button>
+            <span class="control-prong" aria-hidden="true"></span>
           </div>
         </section>
       </section>
 
-      <p class="footer-note">A small place for the people worth remembering — where you met, what they care about, and the thread to pick up next time.</p>
+      <section class="street-valley-world" aria-labelledby="streetValleyHeading">
+        <div class="street-valley-world-header">
+          <div>
+            <div class="eyebrow">A LIVING CARD CATALOG</div>
+            <h2 id="streetValleyHeading">Street Valley</h2>
+            <p>Watch your Rolodex connections wander through an original pixel village.</p>
+          </div>
+          <div class="street-valley-world-actions">
+            <span id="streetValleyCount" aria-live="polite">100 villagers · 0 Rolodex connections</span>
+            <button class="ghost" id="streetValleyToggle" type="button" aria-pressed="false">Pause villagers</button>
+          </div>
+        </div>
+        <div class="street-valley-canvas-wrap">
+          <canvas id="streetValleyCanvas" width="900" height="420" aria-label="Animated Street Valley pixel village"></canvas>
+        </div>
+      </section>
+
+      <p class="footer-note">
+        A small place for the people worth remembering — where you met, what
+        they care about, and the thread to pick up next time.
+      </p>
     </main>
 
     <dialog id="personDialog">
@@ -151,25 +172,27 @@
 
         <div class="modal-actions">
           <button type="button" class="ghost" id="cancelBtn">Cancel</button>
-          <button class="primary" type="submit">Save card</button>
+          <button class="primary">Save card</button>
         </div>
       </form>
     </dialog>
 
-<<<<<<< HEAD
     <dialog id="updateDialog">
       <form class="modal" id="updateForm">
         <h2>Update a card</h2>
         <p class="modal-help">Choose a person by exact name, then select only the information you want to change.</p>
-        <label class="field full">Name key<select id="updateName" name="key" required></select></label>
+        <label class="field full">Name key<select id="updateName" required></select></label>
         <div class="update-fields">
-          <label class="update-field"><span><input type="checkbox" data-field="role" /> Role / company</span><input name="role" data-update-value="role" placeholder="Designer at..." disabled /></label>
-          <label class="update-field"><span><input type="checkbox" data-field="met" /> Where you met</span><input name="met" data-update-value="met" placeholder="Saturday market" disabled /></label>
-          <label class="update-field"><span><input type="checkbox" data-field="city" /> City</span><input name="city" data-update-value="city" placeholder="Portland, OR" disabled /></label>
-          <label class="update-field"><span><input type="checkbox" data-field="phone" /> Phone</span><input name="phone" data-update-value="phone" placeholder="(555) 123-4567" disabled /></label>
-          <label class="update-field"><span><input type="checkbox" data-field="email" /> Email</span><input name="email" data-update-value="email" placeholder="hello@example.com" disabled /></label>
-          <label class="update-field full"><span><input type="checkbox" data-field="notes" /> Memory / notes</span><textarea name="notes" data-update-value="notes" rows="3" placeholder="What should you remember?" disabled></textarea></label>
-          <label class="update-field full"><span><input type="checkbox" data-field="tags" /> Tags</span><input name="tags" data-update-value="tags" placeholder="design, coffee, local" disabled /></label>
+          <label class="update-field"><span><input type="checkbox" data-field="role" /> Role / company</span><input data-update-value="role" placeholder="Designer at..." disabled /></label>
+          <label class="update-field"><span><input type="checkbox" data-field="gender" /> Human type</span><select data-update-value="gender" disabled><option value="">Not specified</option><option value="female">Female</option><option value="male">Male</option></select></label>
+          <label class="update-field"><span><input type="checkbox" data-field="met" /> Where you met</span><input data-update-value="met" placeholder="Saturday market" disabled /></label>
+          <label class="update-field"><span><input type="checkbox" data-field="city" /> City</span><input data-update-value="city" placeholder="Portland, OR" disabled /></label>
+          <label class="update-field"><span><input type="checkbox" data-field="phone" /> Phone</span><input data-update-value="phone" placeholder="(555) 123-4567" disabled /></label>
+          <label class="update-field"><span><input type="checkbox" data-field="email" /> Email</span><input data-update-value="email" placeholder="hello@example.com" disabled /></label>
+          <label class="update-field full"><span><input type="checkbox" data-field="notes" /> Memory / notes</span><textarea data-update-value="notes" rows="3" placeholder="What should you remember?" disabled></textarea></label>
+          <label class="update-field full"><span><input type="checkbox" data-field="appearance" /> Appearance</span><textarea data-update-value="appearance" rows="2" placeholder="Only details you remember" disabled></textarea></label>
+          <label class="update-field full"><span><input type="checkbox" data-field="events" /> Memorable events</span><textarea data-update-value="events" rows="2" placeholder="One event per line" disabled></textarea></label>
+          <label class="update-field full"><span><input type="checkbox" data-field="tags" /> Tags</span><input data-update-value="tags" placeholder="design, coffee, local" disabled /></label>
         </div>
         <div class="modal-actions">
           <button type="button" class="ghost" id="cancelUpdateBtn">Cancel</button>
@@ -178,10 +201,6 @@
       </form>
     </dialog>
 
-    <div class="toast" id="toast" role="status" aria-live="polite"></div>
-    <script src="app.js"></script>
-=======
     <script type="module" src="app.js"></script>
->>>>>>> 1b7b261419e23858ba766a3c04f390ed6a056d83
   </body>
 </html>

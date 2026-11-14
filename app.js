@@ -1,10 +1,6 @@
-<<<<<<< HEAD
-// Starter data keeps the deck useful on first launch.
-=======
 import { initStreetValleyWorld } from './street_valley_world.js';
 import { extractProfile } from './profile-api.mjs';
 
->>>>>>> jonathan_street_valley
 const seed = [
   {
     id: 1,
@@ -125,7 +121,6 @@ const seed = [
   }
 ];
 
-// Application state.
 let people = loadPeople();
 let activeLetter = 'ALL';
 let deckIndex = 0;
@@ -136,7 +131,6 @@ let wheelLocked = false;
 
 const $ = selector => document.querySelector(selector);
 
-// ---------- Storage and data helpers ----------
 function loadPeople() {
   try {
     const saved = JSON.parse(localStorage.getItem('retro-rolodex') || 'null');
@@ -147,8 +141,6 @@ function loadPeople() {
 
 function savePeople() {
   localStorage.setItem('retro-rolodex', JSON.stringify(people));
-<<<<<<< HEAD
-=======
 }
 
 function normalizeName(value) {
@@ -179,7 +171,6 @@ function mergePerson(existing, incoming) {
   existing.events = mergeUnique(existing.events, incoming.events);
   existing.tags = mergeUnique(existing.tags, incoming.tags);
   return existing;
->>>>>>> jonathan_street_valley
 }
 
 function escapeHtml(value) {
@@ -227,7 +218,6 @@ function getFilteredPeople() {
   });
 }
 
-// ---------- Rendering ----------
 function renderIndex() {
   const letters = ['ALL', ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'];
 
@@ -319,6 +309,8 @@ function renderDeck() {
     $('#cardStack').innerHTML = '<div class="empty-card">No cards match this stack.<br />Try a different letter or add someone new.</div>';
     $('#count').textContent = '0 cards';
     $('#position').textContent = '';
+    $('#prevBtn').disabled = true;
+    $('#nextBtn').disabled = true;
     return;
   }
 
@@ -329,18 +321,11 @@ function renderDeck() {
     .map((person, index) => renderCard(person, index))
     .join('');
 
-<<<<<<< HEAD
-  const totalLabel = visiblePeople.length === 1 ? 'card' : 'cards';
-
-  $('#count').textContent = `${visiblePeople.length} ${totalLabel}`;
-  $('#position').textContent = `${deckIndex + 1} / ${visiblePeople.length}`;
-=======
   const currentPerson = visiblePeople[deckIndex];
   const totalLabel = visiblePeople.length === 1 ? 'card' : 'cards';
 
   $('#count').textContent = `${visiblePeople.length} ${totalLabel}`;
   $('#position').textContent = `${deckIndex + 1} / ${visiblePeople.length} · ${getLastName(currentPerson).toUpperCase()}`;
->>>>>>> jonathan_street_valley
 
   const isFirstCard = deckIndex === 0;
   const isLastCard = deckIndex === visiblePeople.length - 1;
@@ -366,7 +351,6 @@ function moveDeck(amount) {
   renderDeck();
 }
 
-// ---------- Contact creation and export ----------
 function buildPerson(form) {
   const name = form.get('name').trim();
   const tags = (form.get('tags') || 'new')
@@ -405,10 +389,6 @@ function exportPeople() {
   URL.revokeObjectURL(link.href);
 }
 
-<<<<<<< HEAD
-// ---------- Event wiring ----------
-=======
->>>>>>> jonathan_street_valley
 $('#prevBtn').onclick = () => moveDeck(-1);
 $('#nextBtn').onclick = () => moveDeck(1);
 
@@ -419,7 +399,13 @@ $('#search').oninput = () => {
 
 $('#deckWindow').addEventListener('wheel', event => {
   event.preventDefault();
-  moveDeck(event.deltaY > 0 ? 1 : -1);
+  if (wheelLocked) return;
+  wheelDelta += event.deltaY;
+  if (Math.abs(wheelDelta) < 100) return;
+  moveDeck(wheelDelta > 0 ? 1 : -1);
+  wheelDelta = 0;
+  wheelLocked = true;
+  window.setTimeout(() => { wheelLocked = false; }, 550);
 }, { passive: false });
 
 document.addEventListener('keydown', event => {
@@ -474,16 +460,11 @@ $('#personForm').onsubmit = event => {
 
   $('#personDialog').close();
   render();
-<<<<<<< HEAD
-=======
   setCaptureStatus(existing ? `${existing.name} updated — new information was added to the same card.` : `${person.name} added.`);
->>>>>>> jonathan_street_valley
 };
 
 $('#exportBtn').onclick = exportPeople;
 
-<<<<<<< HEAD
-=======
 let extracting = false;
 
 function setCaptureStatus(message, error = false) {
@@ -588,7 +569,6 @@ $('#updateForm').onsubmit = event => {
   render();
 };
 
->>>>>>> jonathan_street_valley
 render();
 
 initStreetValleyWorld({
