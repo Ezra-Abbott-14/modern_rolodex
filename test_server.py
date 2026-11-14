@@ -2,12 +2,9 @@
 import io
 import json
 import os
-import threading
 import unittest
 from unittest.mock import patch
 from urllib.error import HTTPError
-from urllib.request import Request, urlopen
-from http.server import ThreadingHTTPServer
 import server
 
 
@@ -60,36 +57,15 @@ class ValidationTests(unittest.TestCase):
 
 
 class HttpTests(unittest.TestCase):
-    def test_app_server_rejects_duplicate_listener(self):
-        first = server.LocalHTTPServer(('127.0.0.1', 0), server.RolodexHandler)
-        try:
-            with self.assertRaises(OSError):
-                server.LocalHTTPServer(first.server_address, server.RolodexHandler)
-        finally:
-            first.server_close()
-
-    @classmethod
-    def setUpClass(cls):
-        cls.httpd = ThreadingHTTPServer(('127.0.0.1', 0), server.RolodexHandler)
-        cls.thread = threading.Thread(target=cls.httpd.serve_forever, daemon=True)
-        cls.thread.start()
-        cls.base = f'http://127.0.0.1:{cls.httpd.server_port}'
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.httpd.shutdown()
-        cls.httpd.server_close()
-        cls.thread.join()
+    def setUp(self):
+        self.app = server.create_app({'TESTING': True, 'PRODUCTION': False,
+                                      'DEMO_ACCESS_CODE': '', 'PUBLIC_ORIGIN': '',
+                                      'SECRET_KEY': 'local-test-secret', 'TRUST_PROXY': False})
+        self.client = self.app.test_client()
 
     def post(self, body):
-        request = Request(self.base + '/api/profile', data=json.dumps(body).encode(),
-                          headers={'Content-Type': 'application/json'})
-        try:
-            response = urlopen(request)
-        except HTTPError as error:
-            response = error
-        with response:
-            return response.status, json.load(response)
+        response = self.client.post('/api/profile', json=body)
+        return response.status_code, response.get_json()
 
     def test_empty_wrong_and_long_input(self):
         for body in ({'note': ''}, {'note': []}, [], {'note': 'a' * 8001}):
@@ -110,14 +86,34 @@ class HttpTests(unittest.TestCase):
             self.assertEqual(mocked.call_count, 2)
 
     def test_assets_and_secret_paths(self):
-        for path in ('/', '/app.js', '/styles.css', '/profile-api.mjs'):
-            with urlopen(self.base + path) as response:
-                self.assertEqual(response.status, 200)
-        for path in ('/.env', '/.git/config', '/server.py', '/test_server.py', '/../.env'):
-            with self.assertRaises(HTTPError) as caught:
-                urlopen(self.base + path)
-            self.assertEqual(caught.exception.code, 404)
+        for path in ('/', '/app.js', '/styles.css', '/profile-api.mjs', '/street_valley_world.js', '/street_valley_characters.js'):
+            with self.client.get(path) as response:
+                self.assertEqual(response.status_code, 200)
+        for path in ('/.env', '/.git/config', '/server.py', '/test_server.py', '/../.env', '/requirements.txt'):
+            self.assertEqual(self.client.get(path).status_code, 404)
 
+    def test_live_server_preflight_and_response(self):
+        for origin in ('http://localhost:5500', 'http://127.0.0.1:5500'):
+            response = self.client.options('/api/profile', headers={'Origin':origin, 'Access-Control-Request-Method':'POST'})
+            self.assertEqual(response.status_code,204)
+            self.assertEqual(response.headers.getlist('Access-Control-Allow-Origin'),[origin])
+            with patch('server.call_gemini',return_value=example_profile()):
+                response = self.client.post('/api/profile', json={'note':'Jamie Rivera'}, headers={'Origin':origin})
+                self.assertEqual(response.status_code,200)
+                self.assertEqual(response.headers.getlist('Access-Control-Allow-Origin'),[origin])
 
-if __name__ == '__main__':
-    unittest.main()
+    def test_untrusted_origins_are_rejected_before_gemini(self):
+        for origin in ('https://example.com','null','http://localhost:5500.evil.example'):
+            with patch('server.call_gemini') as upstream:
+                response = self.client.post('/api/profile',json={'note':'Jamie'},headers={'Origin':origin})
+                self.assertEqual(response.status_code,403)
+                self.assertIsNone(response.headers.get('Access-Control-Allow-Origin'))
+                upstream.assert_not_called()
+
+    def test_body_type_size_and_malformed_json(self):
+        self.assertEqual(self.client.post('/api/profile',data='hello').status_code,415)
+        self.assertEqual(self.client.post('/api/profile',data='{bad',content_type='application/json').status_code,400)
+        self.assertEqual(self.client.post('/api/profile',json={'note':'a'*70000}).status_code,413)
+
+    def test_remote_development_access_is_rejected(self):
+        self.assertEqual(self.client.get('/',environ_overrides={'REMOTE_ADDR':'10.0.0.5'}).status_code,403)

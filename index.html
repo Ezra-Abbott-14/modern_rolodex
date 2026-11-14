@@ -30,6 +30,7 @@
         </nav>
 
         <div class="top-actions">
+          <button class="ghost" id="logoutBtn" type="button" hidden>Sign out</button>
           <button class="ghost" id="exportBtn" type="button">Export cards</button>
           <button class="ghost" id="updateBtn" type="button">Update card</button>
           <button class="primary" id="addBtn" type="button">＋ Add person</button>
@@ -210,10 +211,10 @@
             </select>
           </label>
 
-          <label>
+          <!-- <label>
             Pronouns (if stated)
             <input name="pronouns" />
-          </label>
+          </label> -->
 
           <label class="field full">
             Memorable events (one per line)
@@ -240,7 +241,7 @@
         <label class="field full">Name key<select id="updateName" required></select></label>
         <div class="update-fields">
           <label class="update-field"><span><input type="checkbox" data-field="role" /> Role / company</span><input data-update-value="role" placeholder="Designer at..." disabled /></label>
-          <label class="update-field"><span><input type="checkbox" data-field="gender" /> Human type</span><select data-update-value="gender" disabled><option value="">Not specified</option><option value="female">Female</option><option value="male">Male</option></select></label>
+          <label class="update-field"><span><input type="checkbox" data-field="gender" /> Gender</span><select data-update-value="gender" disabled><option value="">Not specified</option><option value="female">Female</option><option value="male">Male</option></select></label>
           <label class="update-field"><span><input type="checkbox" data-field="met" /> Where you met</span><input data-update-value="met" placeholder="Saturday market" disabled /></label>
           <label class="update-field"><span><input type="checkbox" data-field="city" /> City</span><input data-update-value="city" placeholder="Portland, OR" disabled /></label>
           <label class="update-field"><span><input type="checkbox" data-field="phone" /> Phone</span><input data-update-value="phone" placeholder="(555) 123-4567" disabled /></label>

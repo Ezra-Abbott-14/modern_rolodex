@@ -1,9 +1,8 @@
-"""Rolodexi localhost server and Gemini extraction. No external Python dependencies."""
+"""Gemini extraction and secured Flask/Waitress server entry point."""
 import json
 import os
 import re
 import socket
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
@@ -88,39 +87,10 @@ def call_gemini(note):
     return validate_profile(profile)
 
 
-class LocalHTTPServer(ThreadingHTTPServer):
-    # Windows otherwise permits multiple servers to bind the same address,
-    # sending browser requests unpredictably to old copies after a restart.
-    allow_reuse_address = False
+def create_app(overrides=None):
+    from webapp import create_app as factory
+    return factory(overrides)
 
-    def server_bind(self):
-        if hasattr(socket, 'SO_EXCLUSIVEADDRUSE'):
-            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 1)
-        super().server_bind()
-
-
-class RolodexHandler(BaseHTTPRequestHandler):
-    def send_json(self, status, payload):
-        body = json.dumps(payload, ensure_ascii=False).encode('utf-8')
-        self.send_response(status)
-        self.send_header('Content-Type', 'application/json; charset=utf-8')
-        self.send_header('Content-Length', str(len(body)))
-        self.send_header('Cache-Control', 'no-store')
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header('Access-Control-Allow-Methods', 'POST, OPTIONS')
-        self.send_header('Access-Control-Allow-Headers', 'Content-Type')
-        self.end_headers()
-        self.wfile.write(body)
-
-    def do_OPTIONS(self):
-        if self.path.split('?', 1)[0] != '/api/profile':
-            return self.send_json(404, {'error': 'Not found'})
-        self.send_response(204)
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header('Access-Control-Allow-Methods', 'POST, OPTIONS')
-        self.send_header('Access-Control-Allow-Headers', 'Content-Type')
-        self.send_header('Access-Control-Max-Age', '300')
-        self.end_headers()
 
     def do_POST(self):
         if self.path != '/api/profile':
@@ -162,11 +132,32 @@ class RolodexHandler(BaseHTTPRequestHandler):
         self.send_header('Content-Length', str(len(content)))
         self.end_headers()
         self.wfile.write(content)
+def open_listener(host, port):
+    listener = socket.socket(socket.AF_INET6 if ':' in host else socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        if hasattr(socket, 'SO_EXCLUSIVEADDRUSE'):
+            listener.setsockopt(socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 1)
+        else:
+            listener.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        listener.bind((host, port))
+        listener.listen(128)
+        return listener
+    except Exception:
+        listener.close()
+        raise
 
 
 if __name__ == '__main__':
+    from waitress import serve
     load_env()
+    app = create_app()
+    production = app.config['PRODUCTION']
+    host = os.environ.get('HOST', '0.0.0.0' if production else '127.0.0.1')
+    if not production and host not in ('127.0.0.1', 'localhost', '::1'):
+        raise RuntimeError('Network binding requires APP_ENV=production with HTTPS and access controls configured.')
     port = int(os.environ.get('PORT', '8000'))
-    print(f'Rolodexi: http://localhost:{port}', flush=True)
-    httpd = LocalHTTPServer(('127.0.0.1', port), RolodexHandler)
-    httpd.serve_forever()
+    with open_listener(host, port) as listener:
+        print(f'Rolodexi: {app.config["PUBLIC_ORIGIN"] or f"http://localhost:{port}"} ({"production" if production else "development"})', flush=True)
+        serve(app, sockets=[listener], threads=8, max_request_body_size=64000,
+              max_request_header_size=16384, channel_timeout=60, connection_limit=100,
+              clear_untrusted_proxy_headers=not app.config['TRUST_PROXY'])

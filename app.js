@@ -1,5 +1,5 @@
 import { initStreetValleyWorld } from './street_valley_world.js';
-import { extractProfile } from './profile-api.mjs';
+import { extractProfile, populateProfileForm } from './profile-api.mjs';
 
 const introLoader = document.querySelector('#introLoader');
 if (introLoader) {
@@ -143,6 +143,18 @@ let wheelDelta = 0;
 let wheelLocked = false;
 
 const $ = selector => document.querySelector(selector);
+
+const sessionToken = document.querySelector('meta[name="csrf-token"]')?.content;
+if (sessionToken) {
+  $('#logoutBtn').hidden = false;
+  $('#logoutBtn').onclick = async () => {
+    try {
+      const response = await fetch('/logout', {method:'POST',headers:{'X-CSRF-Token':sessionToken}});
+      if (!response.ok) throw new Error();
+      window.location.assign('/login');
+    } catch { window.alert('Sign out failed. Check your connection and retry.'); }
+  };
+}
 
 function loadPeople() {
   try {
@@ -428,7 +440,7 @@ $('#deckWindow').addEventListener('wheel', event => {
 }, { passive: false });
 
 document.addEventListener('keydown', event => {
-  if ($('#personDialog').open || /INPUT|TEXTAREA/.test(event.target.tagName)) return;
+  if ($('#personDialog').open || $('#updateDialog').open || /INPUT|TEXTAREA|SELECT/.test(event.target.tagName)) return;
   if (event.key === 'ArrowRight') moveDeck(1);
   if (event.key === 'ArrowLeft') moveDeck(-1);
 });
@@ -511,9 +523,17 @@ $('#generateBtn').onclick = async () => {
     $('#personForm').elements.namedItem('events').value = (profile.events || []).join('\n');
     $('#personForm').elements.namedItem('tags').value = (profile.tags || []).join(', ');
     setCaptureStatus('Details organized. Review them below, then save your card.');
+    populateProfileForm($('#personForm'), profile);
+    setCaptureStatus('Details extracted with Gemini. Review them below, then save your card.');
   } catch (error) {
     setCaptureStatus(error.message, true);
-    $('#serviceHelp').hidden = !['WRONG_SERVER', 'BACKEND_UNREACHABLE'].includes(error.code);
+    const expired = ['AUTH_REQUIRED', 'CSRF_FAILED'].includes(error.code);
+    $('#serviceHelp').hidden = !expired && !['WRONG_SERVER', 'BACKEND_UNREACHABLE'].includes(error.code);
+    if (expired) {
+      const link = $('#serviceHelp a');
+      link.href = '/login';
+      link.textContent = 'Sign in again, then refresh this page (copy your note first)';
+    }
   } finally {
     extracting = false;
     $('#cancelBtn').disabled = false;
