@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 const transcript = document.querySelector('#transcript');
 const generateButton = document.querySelector('#generateButton');
 const profileGrid = document.querySelector('#profileGrid');
@@ -17,150 +18,353 @@ const seedContacts = [
   { name: 'Maya Chen', where: 'Met at the Saturday market', facts: ['Artist', 'First gallery show is in October.'], tag: 'CREATIVE SPARK', color: 'coral', meta: 'She / her' },
   { name: 'Jon Bell', where: 'Introduced by Nora at Bloom', facts: ['Training for his first half marathon.'], tag: 'GOOD ENERGY', color: 'blue', meta: 'He / him' },
   { name: 'Amara Lewis', where: 'On the train to Portland', facts: ['Knows the best tiny bookstores.'], tag: 'THE CONNECTOR', color: 'yellow', meta: 'She / her' },
+=======
+const seed = [
+  {
+    id: 1,
+    name: 'Maya Rodriguez',
+    role: 'Creative Director · Morrow Studio',
+    met: 'Maker’s Market',
+    city: 'Austin, TX',
+    phone: '(512) 555-0184',
+    email: 'maya@morrow.studio',
+    notes: 'Talked for an hour about making small brands feel human. She is collecting matchbooks from every city she visits.',
+    tags: ['design', 'maker', 'coffee'],
+    avatar: 'MR',
+    tone: 'rust'
+  },
+  {
+    id: 2,
+    name: 'Jon Bell',
+    role: 'Founder · North Loop Coffee',
+    met: 'The neighborhood coffee shop',
+    city: 'Minneapolis, MN',
+    phone: '(612) 555-0142',
+    email: 'jon@northloop.co',
+    notes: 'Runs a tiny roastery and knows every good breakfast spot in town. Send him the photo from the latte art throwdown.',
+    tags: ['coffee', 'food', 'local'],
+    avatar: 'JB',
+    tone: 'teal'
+  },
+  {
+    id: 3,
+    name: 'Priya Shah',
+    role: 'Product Lead · Kiteworks',
+    met: 'Product Camp unconference',
+    city: 'Chicago, IL',
+    phone: '(773) 555-0127',
+    email: 'priya@kiteworks.io',
+    notes: 'Believes every good product starts with a sharp question. Wants to trade notes on community-led growth.',
+    tags: ['product', 'ideas'],
+    avatar: 'PS',
+    tone: 'gold'
+  },
+  {
+    id: 4,
+    name: 'Theo Martin',
+    role: 'Photographer',
+    met: 'Train to Marfa',
+    city: 'Marfa, TX',
+    phone: '(432) 555-0156',
+    email: 'theo@theomartin.photo',
+    notes: 'Shooting desert light on old medium format. He recommended the little bookstore by the water tower.',
+    tags: ['photography', 'travel'],
+    avatar: 'TM',
+    tone: 'teal'
+  },
+  {
+    id: 5,
+    name: 'Willow Brooks',
+    role: 'Ceramicist · Soft Corner Studio',
+    met: 'A rainy Sunday flea market',
+    city: 'Seattle, WA',
+    phone: '(206) 555-0191',
+    email: 'willow@softcorner.studio',
+    notes: 'Makes tiny blue vases and keeps a list of every good soup she has ever had.',
+    tags: ['ceramics', 'art', 'soup'],
+    avatar: 'WB',
+    tone: 'rust'
+  },
+  {
+    id: 6,
+    name: 'Avery Chen',
+    role: 'Urban Gardener · Greenline',
+    met: 'The community garden workday',
+    city: 'Denver, CO',
+    phone: '(303) 555-0168',
+    email: 'avery@greenline.co',
+    notes: 'Growing tomatoes on a balcony and trying to convince everyone that marigolds belong in every garden.',
+    tags: ['plants', 'community', 'outdoors'],
+    avatar: 'AC',
+    tone: 'gold'
+  },
+  {
+    id: 7,
+    name: 'Omar Patel',
+    role: 'Independent Bookshop Owner',
+    met: 'The bookstore reading series',
+    city: 'Portland, OR',
+    phone: '(503) 555-0135',
+    email: 'omar@paperlanternbooks.com',
+    notes: 'Recommended three strange and wonderful novels. Ask him about the author who writes entirely on postcards.',
+    tags: ['books', 'writing', 'local'],
+    avatar: 'OP',
+    tone: 'teal'
+  },
+  {
+    id: 8,
+    name: 'Nina Kim',
+    role: 'Illustrator · Freelance',
+    met: 'A tiny poster show downtown',
+    city: 'Los Angeles, CA',
+    phone: '(323) 555-0174',
+    email: 'hello@ninakimdraws.com',
+    notes: 'Draws expressive little animals and has a very good eye for vintage matchbook design.',
+    tags: ['illustration', 'design', 'vintage'],
+    avatar: 'NK',
+    tone: 'rust'
+  },
+  {
+    id: 9,
+    name: 'Elliot James',
+    role: 'Sound Designer · Field Notes Audio',
+    met: 'The neighborhood record store',
+    city: 'Brooklyn, NY',
+    phone: '(718) 555-0116',
+    email: 'elliot@fieldnotesaudio.com',
+    notes: 'Records small everyday sounds: train doors, grocery carts, and the click of old light switches.',
+    tags: ['music', 'audio', 'curious'],
+    avatar: 'EJ',
+    tone: 'gold'
+  }
+>>>>>>> d224744b696f5e66fac191d4e9d8d09289b1642a
 ];
 
-const showToast = (message) => {
-  toast.textContent = message;
-  toast.classList.add('show');
-  window.setTimeout(() => toast.classList.remove('show'), 3200);
-};
-const clean = (value) => String(value || '').replace(/[.!?]+$/, '').trim();
-const nameKey = (value) => clean(value).toLowerCase().replace(/[^a-z0-9]/g, '');
-const initials = (name) => name.split(/\s+/).map((part) => part[0]).join('').slice(0, 2).toUpperCase();
-const newId = () => window.crypto?.randomUUID?.() || `contact-${Date.now()}-${Math.random().toString(16).slice(2)}`;
-const formatFact = (value) => {
-  const fact = clean(value);
-  if (/^(an?|the)\s+/i.test(fact)) return fact.replace(/^(an?|the)\s+/i, '').replace(/^./, (letter) => letter.toUpperCase());
-  return fact.replace(/^./, (letter) => letter.toUpperCase());
-};
-const uniqueFacts = (facts) => [...new Set(facts.map(formatFact).filter(Boolean))];
-const factsFor = (contact) => uniqueFacts(Array.isArray(contact.facts) ? contact.facts : [contact.memory]);
+let people = loadPeople();
+let activeLetter = 'ALL';
+let deckIndex = 0;
+let visiblePeople = sortByLastName(people);
+let dragStart = null;
 
-// Temporary local matching for the MVP. The AI backend can replace this with
-// semantic matching later, while keeping the same mergeContact() interface.
-const samePerson = (left, right) => {
-  const leftKey = nameKey(left);
-  const rightKey = nameKey(right);
-  return leftKey === rightKey || (leftKey && rightKey && (leftKey.startsWith(rightKey) || rightKey.startsWith(leftKey)));
-};
+const $ = selector => document.querySelector(selector);
 
-const mergeContact = (contact, incoming) => {
-  contact.facts = uniqueFacts([...factsFor(contact), ...incoming.facts]);
-  if (incoming.summary) contact.summary = incoming.summary;
-  if (incoming.where && incoming.where !== 'A memorable first meeting' && contact.where !== incoming.where) {
-    contact.where = contact.where ? `${contact.where}; ${incoming.where}` : incoming.where;
-  }
-  contact.added = 'Updated just now';
-  return contact;
-};
+function loadPeople() {
+  return JSON.parse(localStorage.getItem('retro-rolodex') || 'null') || seed;
+}
 
-const loadContacts = () => {
-  let saved = seedContacts;
-  try {
-    const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY));
-    if (Array.isArray(parsed) && parsed.length) saved = parsed;
-  } catch { /* Use the starter contacts when storage is unavailable. */ }
+function savePeople() {
+  localStorage.setItem('retro-rolodex', JSON.stringify(people));
+}
 
-  // Also clean up duplicates from earlier versions of the prototype.
-  return saved.reduce((merged, rawContact) => {
-    const contact = { ...rawContact, id: rawContact.id || newId(), facts: factsFor(rawContact) };
-    const existing = merged.find((item) => samePerson(item.name, contact.name));
-    if (existing) mergeContact(existing, contact);
-    else merged.push(contact);
-    return merged;
-  }, []);
-};
+function escapeHtml(value) {
+  return String(value || '').replace(/[&<>"']/g, character => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;'
+  })[character]);
+}
 
-let contacts = loadContacts();
-const saveContacts = () => localStorage.setItem(STORAGE_KEY, JSON.stringify(contacts));
+function getLastName(person) {
+  return person.name.trim().split(/\s+/).pop().toLocaleLowerCase();
+}
 
-const render = () => {
-  const query = searchInput.value.trim().toLowerCase();
-  let visible = contacts.filter((contact) => `${contact.name} ${contact.where} ${contact.summary || ''} ${factsFor(contact).join(' ')}`.toLowerCase().includes(query));
-  if (sortMode === 'recent') visible = [...visible].reverse();
-  if (sortMode === 'az') visible.sort((a, b) => a.name.localeCompare(b.name));
-  profileGrid.replaceChildren();
-
-  visible.forEach((contact, index) => {
-    const card = document.createElement('article');
-    card.className = `profile-card ${contact.color || 'green'}`;
-    card.innerHTML = `<div class="card-top"><span class="profile-number">${String(index + 1).padStart(2, '0')}</span><button class="more-button" type="button" aria-label="Remove contact">•••</button></div><div class="portrait"><span>${initials(contact.name)}</span></div><div class="profile-info"><div class="tag">${contact.tag || 'NEW CONNECTION'}</div><h3></h3><p></p><div class="profile-meta"><span>${contact.meta || 'Pronouns not set'}</span><span>·</span><span>${contact.added || 'Added today'}</span></div></div><div class="memory-quote"><div class="memory-label">ORGANIZED MEMORY</div><ul class="fact-list"></ul></div>`;
-    card.querySelector('h3').textContent = contact.name;
-    card.querySelector('.profile-info p').textContent = contact.summary || contact.where || 'A memorable first meeting';
-    const factList = card.querySelector('.fact-list');
-    factsFor(contact).forEach((fact) => { const item = document.createElement('li'); item.textContent = fact; factList.append(item); });
-    card.querySelector('.more-button').addEventListener('click', () => removeContact(contact));
-    profileGrid.append(card);
+function sortByLastName(list) {
+  return [...list].sort((first, second) => {
+    const lastNameOrder = getLastName(first).localeCompare(getLastName(second));
+    return lastNameOrder || first.name.localeCompare(second.name);
   });
-  profileCount.textContent = String(contacts.length).padStart(2, '0');
-  if (!visible.length) { const empty = document.createElement('p'); empty.className = 'empty-state'; empty.textContent = 'No people match that search yet.'; profileGrid.append(empty); }
-};
+}
 
-const removeContact = (contact) => {
-  if (!window.confirm(`Remove ${contact.name} from your orbit?`)) return;
-  contacts = contacts.filter((item) => item !== contact);
-  saveContacts();
-  render();
-  showToast(`${contact.name} was removed.`);
-};
+function getFilteredPeople() {
+  const query = $('#search').value.toLowerCase().trim();
 
-const addContact = ({ name, where, facts, tag = 'NEW CONNECTION', color = 'green', meta = 'Pronouns not set' }) => {
-  const incoming = { id: newId(), name: clean(name) || 'New connection', where: clean(where), facts: uniqueFacts(facts), tag, color, meta, added: 'Added just now' };
-  const existing = contacts.find((contact) => samePerson(contact.name, incoming.name));
-  if (existing) {
-    mergeContact(existing, incoming);
-    saveContacts();
-    render();
-    showToast(`${existing.name} updated — new information merged.`);
+  return sortByLastName(people).filter(person => {
+    const matchesLetter = activeLetter === 'ALL'
+      || getLastName(person)[0].toUpperCase() === activeLetter;
+
+    const searchableText = [
+      person.name,
+      person.role,
+      person.met,
+      person.city,
+      person.notes,
+      ...person.tags
+    ].join(' ').toLowerCase();
+
+    return matchesLetter && (!query || searchableText.includes(query));
+  });
+}
+
+function renderIndex() {
+  const letters = ['ALL', ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'];
+
+  $('#index').innerHTML = letters.map(letter => {
+    const label = letter === 'ALL' ? '★ All cards' : letter;
+    const activeClass = letter === activeLetter ? 'active' : '';
+
+    return `<button class="tab ${activeClass}" data-letter="${letter}">${label}</button>`;
+  }).join('');
+
+  document.querySelectorAll('[data-letter]').forEach(button => {
+    button.onclick = () => {
+      activeLetter = button.dataset.letter;
+      deckIndex = 0;
+      render();
+    };
+  });
+}
+
+function getToneClass(person) {
+  if (person.tone === 'rust') return 'rust';
+  if (person.tone === 'gold') return 'gold';
+  return '';
+}
+
+function renderCard(person, position) {
+  const stackClass = position === 0
+    ? 'front'
+    : `behind-${Math.min(position, 3)}`;
+  const lastName = getLastName(person).toUpperCase();
+  const firstLetter = lastName[0];
+  const tags = person.tags
+    .map(tag => `<span class="tag">#${escapeHtml(tag)}</span>`)
+    .join('');
+
+  return `
+    <article class="contact-card ${stackClass}">
+      <div class="card-tab">${firstLetter}</div>
+
+      <div class="card-header">
+        <div class="avatar ${getToneClass(person)}">${escapeHtml(person.avatar)}</div>
+        <div>
+          <h2>${escapeHtml(person.name)}</h2>
+          <div class="role">${escapeHtml(person.role)}</div>
+        </div>
+      </div>
+
+      <hr class="card-rule" />
+
+      <div class="card-fields">
+        <div>
+          <div class="label">Met at</div>
+          <div class="value">${escapeHtml(person.met)}</div>
+        </div>
+        <div>
+          <div class="label">Based in</div>
+          <div class="value">${escapeHtml(person.city)}</div>
+        </div>
+        <div>
+          <div class="label">Phone</div>
+          <div class="value"><a href="tel:${escapeHtml(person.phone)}">${escapeHtml(person.phone)}</a></div>
+        </div>
+        <div>
+          <div class="label">Email</div>
+          <div class="value"><a href="mailto:${escapeHtml(person.email)}">${escapeHtml(person.email)}</a></div>
+        </div>
+      </div>
+
+      <div class="card-note">
+        <div class="label">Remember this</div>
+        ${escapeHtml(person.notes)}
+      </div>
+
+      <div class="tags">${tags}</div>
+      <div class="card-number">CARD ${String(person.id).padStart(2, '0')} · LAST NAME: ${lastName}</div>
+    </article>`;
+}
+
+function renderDeck() {
+  visiblePeople = getFilteredPeople();
+
+  if (!visiblePeople.length) {
+    $('#cardStack').innerHTML = '<div class="empty-card">No cards match this stack.<br />Try a different letter or add someone new.</div>';
+    $('#count').textContent = '0 cards';
+    $('#position').textContent = '';
     return;
   }
-  contacts.unshift(incoming);
-  saveContacts();
-  render();
-  showToast(`${incoming.name} was added to your orbit.`);
-};
 
-const aiContactPayload = (contact) => ({
-  id: contact.id,
-  name: contact.name,
-  where: contact.where || '',
-  summary: contact.summary || '',
-  facts: factsFor(contact),
-});
+  deckIndex = Math.max(0, Math.min(deckIndex, visiblePeople.length - 1));
+  const cardsToShow = visiblePeople.slice(deckIndex, deckIndex + 4);
 
-const saveWithAI = async (note, fallback) => {
-  const response = await fetch('/api/merge', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ contacts: contacts.map(aiContactPayload), new_note: note }),
-  });
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(error.error || 'The AI merge request failed.');
-  }
-  const result = await response.json();
-  const aiContact = result.contact || {};
-  const matchIndex = contacts.findIndex((contact) => contact.id === result.matched_contact_id);
-  const previous = matchIndex >= 0 ? contacts[matchIndex] : null;
-  const updated = {
-    ...(previous || {}),
-    id: previous?.id || newId(),
-    name: clean(aiContact.name) || fallback.name,
-    where: clean(aiContact.where) || previous?.where || fallback.where,
-    summary: clean(aiContact.summary) || previous?.summary || '',
-    facts: uniqueFacts(aiContact.facts?.length ? aiContact.facts : fallback.facts),
-    tag: previous?.tag || 'NEW CONNECTION',
-    color: previous?.color || 'green',
-    meta: previous?.meta || 'Pronouns not set',
-    added: previous ? 'AI updated just now' : 'Added just now',
+  $('#cardStack').innerHTML = cardsToShow
+    .map((person, index) => renderCard(person, index))
+    .join('');
+
+  const currentPerson = visiblePeople[deckIndex];
+  const totalLabel = visiblePeople.length === 1 ? 'card' : 'cards';
+
+  $('#count').textContent = `${visiblePeople.length} ${totalLabel}`;
+  $('#position').textContent = `${deckIndex + 1} / ${visiblePeople.length} · ${getLastName(currentPerson).toUpperCase()}`;
+
+  const isFirstCard = deckIndex === 0;
+  const isLastCard = deckIndex === visiblePeople.length - 1;
+
+  $('#prevBtn').disabled = isFirstCard;
+  $('#nextBtn').disabled = isLastCard;
+  $('#prevBtn').style.opacity = isFirstCard ? '.45' : '1';
+  $('#nextBtn').style.opacity = isLastCard ? '.45' : '1';
+}
+
+function render() {
+  renderIndex();
+  renderDeck();
+}
+
+function moveDeck(amount) {
+  if (!visiblePeople.length) return;
+
+  deckIndex = Math.max(0, Math.min(
+    deckIndex + amount,
+    visiblePeople.length - 1
+  ));
+  renderDeck();
+}
+
+function buildPerson(form) {
+  const name = form.get('name').trim();
+  const tags = (form.get('tags') || 'new')
+    .split(',')
+    .map(tag => tag.trim())
+    .filter(Boolean);
+
+  return {
+    id: Date.now(),
+    name,
+    role: form.get('role') || 'New connection',
+    met: form.get('met') || 'Somewhere interesting',
+    city: form.get('city') || '—',
+    phone: form.get('phone') || '—',
+    email: form.get('email') || '—',
+    notes: form.get('notes') || 'Add a note next time you see them.',
+    tags,
+    avatar: name.split(' ').map(part => part[0]).join('').slice(0, 2).toUpperCase(),
+    tone: ['teal', 'rust', 'gold'][people.length % 3]
   };
-  if (matchIndex >= 0) contacts[matchIndex] = updated;
-  else contacts.unshift(updated);
-  saveContacts();
-  render();
-  showToast(previous ? `${updated.name} updated by AI.` : `${updated.name} was added by AI.`);
+}
+
+function exportPeople() {
+  const blob = new Blob([
+    JSON.stringify(sortByLastName(people), null, 2)
+  ], { type: 'application/json' });
+  const link = document.createElement('a');
+
+  link.href = URL.createObjectURL(blob);
+  link.download = 'my-rolodex.json';
+  link.click();
+  URL.revokeObjectURL(link.href);
+}
+
+$('#prevBtn').onclick = () => moveDeck(-1);
+$('#nextBtn').onclick = () => moveDeck(1);
+
+$('#search').oninput = () => {
+  deckIndex = 0;
+  renderDeck();
 };
 
+<<<<<<< HEAD
 const extract = (text, patterns, fallback) => {
   for (const pattern of patterns) { const match = text.match(pattern); if (match) return clean(match[1]); }
   return fallback;
@@ -206,18 +410,50 @@ document.querySelectorAll('.filter:not(.manual-trigger)').forEach((filter) => fi
   render();
 }));
 manualForm.addEventListener('submit', async (event) => {
+=======
+$('#deckWindow').addEventListener('wheel', event => {
+>>>>>>> d224744b696f5e66fac191d4e9d8d09289b1642a
   event.preventDefault();
-  const data = new FormData(manualForm);
-  const fallback = { name: data.get('name'), where: data.get('where'), facts: [data.get('memory')] };
-  try { await saveWithAI(`${fallback.name}. ${fallback.where}. ${fallback.facts[0]}`, fallback); }
-  catch (error) { addContact(fallback); console.warn(error); }
-  manualForm.reset();
-  manualPanel.hidden = true;
-});
-closeManualButton.addEventListener('click', () => { manualPanel.hidden = true; });
-manualTrigger.addEventListener('click', () => { manualPanel.hidden = false; manualForm.querySelector('input').focus(); });
-document.addEventListener('keydown', (event) => { if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') { event.preventDefault(); transcript.focus(); } });
+  moveDeck(event.deltaY > 0 ? 1 : -1);
+}, { passive: false });
 
-// Persist the migration from the old one-memory shape to the merged facts shape.
-saveContacts();
+document.addEventListener('keydown', event => {
+  if (event.key === 'ArrowRight') moveDeck(1);
+  if (event.key === 'ArrowLeft') moveDeck(-1);
+});
+
+$('#deckWindow').addEventListener('pointerdown', event => {
+  dragStart = event.clientX;
+});
+
+$('#deckWindow').addEventListener('pointerup', event => {
+  if (dragStart === null) return;
+
+  const distance = event.clientX - dragStart;
+  if (Math.abs(distance) > 45) moveDeck(distance < 0 ? 1 : -1);
+  dragStart = null;
+});
+
+$('#addBtn').onclick = () => {
+  $('#personForm').reset();
+  $('#personDialog').showModal();
+};
+
+$('#cancelBtn').onclick = () => $('#personDialog').close();
+
+$('#personForm').onsubmit = event => {
+  event.preventDefault();
+
+  const person = buildPerson(new FormData(event.target));
+  people.push(person);
+  activeLetter = 'ALL';
+  deckIndex = sortByLastName(people).findIndex(item => item.id === person.id);
+
+  savePeople();
+  $('#personDialog').close();
+  render();
+};
+
+$('#exportBtn').onclick = exportPeople;
+
 render();
