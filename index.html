@@ -60,10 +60,21 @@
             <h2 id="library-heading">People in your orbit</h2>
           </div>
           <div class="filter-row">
+            <label class="search-box" for="searchInput"><span aria-hidden="true">⌕</span><input id="searchInput" type="search" placeholder="Search people or memories" /></label>
+            <button class="filter manual-trigger" id="manualTrigger" type="button">+ Add manually</button>
             <button class="filter active" type="button">All people</button>
             <button class="filter" type="button">Recently added</button>
             <button class="filter" type="button">A–Z</button>
           </div>
+        </div>
+        <div class="manual-panel" id="manualPanel" hidden>
+          <div class="manual-panel-heading"><div><div class="eyebrow">MANUAL ENTRY</div><h3>Add someone to your orbit</h3></div><button class="close-button" id="closeManualButton" type="button" aria-label="Close manual entry">×</button></div>
+          <form id="manualForm" class="manual-form">
+            <label>Name<input name="name" required placeholder="First and last name" /></label>
+            <label>Where you met<input name="where" placeholder="Saturday market, work, school…" /></label>
+            <label>What to remember<textarea name="memory" rows="2" placeholder="A detail, birthday, interest, or next step"></textarea></label>
+            <button class="generate-button" type="submit">Save contact <span>↗</span></button>
+          </form>
         </div>
         <div class="profile-grid" id="profileGrid">
           <article class="profile-card coral" data-name="Maya Chen" data-profile="maya">
