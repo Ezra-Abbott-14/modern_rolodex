@@ -17,5 +17,14 @@ but details remain; **open** means no choice exists.
 | 2026-11-14 | Include creation and update timestamps. | Decided | Deletion timestamps remain under discussion. |
 | 2026-11-14 | Start simple; AWS/cloud hosting is a stretch goal. | Decided | Current implementation remains local. |
 | 2026-11-14 | MySQL is the database owner's familiar technology, but storage is not chosen. | Open | Compare options before implementation. |
+| 2026-11-14 | Use the provisioned AWS RDS MySQL 8.4 instance for the MVP database. | Decided | Single-AZ development instance; cloud deployment is the goal. |
+| 2026-11-14 | Store all current UI profile fields, plus ownership and lifecycle metadata. | Decided | `avatar` and `tone` remain presentation values. |
+| 2026-11-14 | Separate durable contacts from meeting-source records. | Decided | Source text is retained separately from the durable profile. |
+| 2026-11-14 | Store UI events as memorable facts and tags in child tables. | Provisional | Duplicate-contact behavior is still open. |
+| 2026-11-14 | Use `dev-user-1` as the temporary owner until authentication exists. | Decided | Replace with the auth provider subject later. |
+| 2026-11-14 | Defer audio storage and raw AI response storage. | Decided | No recording flow exists; S3 is future work. |
+| 2026-11-14 | Do not enforce automatic source deletion in the first database slice. | Decided | Store expiration metadata; deletion policy remains open. |
 
-No database plan, schema, or REST contract has been approved yet.
+The initial schema is in `database/001_initial_schema.sql`; the JSON contract is in
+`database-contract.md`. These are the first implementation artifacts, not the final
+authentication, retention, or duplicate-matching design.
