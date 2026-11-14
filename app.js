@@ -4,7 +4,7 @@ import { extractProfile } from './profile-api.mjs';
 const introLoader = document.querySelector('#introLoader');
 if (introLoader) {
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const introDuration = reducedMotion ? 250 : 4800;
+  const introDuration = reducedMotion ? 250 : 5800;
   window.setTimeout(() => {
     introLoader.classList.add('is-done');
     introLoader.setAttribute('aria-hidden', 'true');
@@ -355,11 +355,17 @@ function render() {
 function moveDeck(amount) {
   if (!visiblePeople.length) return;
 
+  const stack = $('#cardStack');
+  const flipClass = amount > 0 ? 'flip-next' : 'flip-prev';
+  stack.classList.remove('flip-next', 'flip-prev');
+  void stack.offsetWidth;
+  stack.classList.add(flipClass);
   deckIndex = Math.max(0, Math.min(
     deckIndex + amount,
     visiblePeople.length - 1
   ));
   renderDeck();
+  window.setTimeout(() => stack.classList.remove(flipClass), 620);
 }
 
 function buildPerson(form) {
@@ -579,6 +585,29 @@ $('#updateForm').onsubmit = event => {
   deckIndex = sortByLastName(people).findIndex(item => item.id === person.id);
   render();
 };
+
+const aboutDialog = $('#aboutDialog');
+$('#aboutBtn').onclick = () => aboutDialog.showModal();
+$('#aboutCloseBtn').onclick = () => aboutDialog.close();
+$('#aboutReturnBtn').onclick = () => aboutDialog.close();
+aboutDialog.addEventListener('click', event => {
+  if (event.target === aboutDialog) aboutDialog.close();
+});
+
+const videoShell = $('#memoryVideoShell');
+if (videoShell && 'IntersectionObserver' in window) {
+  const videoObserver = new IntersectionObserver(([entry]) => {
+    videoShell.classList.toggle('is-expanded', entry.isIntersecting && entry.intersectionRatio > .35);
+  }, { threshold: [.35] });
+  videoObserver.observe(videoShell);
+}
+
+const memoryVideo = $('#memoryVideo');
+const videoPrompt = $('#videoPrompt');
+if (memoryVideo && videoPrompt) {
+  memoryVideo.addEventListener('canplay', () => { videoPrompt.hidden = true; });
+  memoryVideo.addEventListener('error', () => { videoPrompt.hidden = false; });
+}
 
 render();
 

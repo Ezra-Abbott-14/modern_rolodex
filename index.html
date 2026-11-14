@@ -35,6 +35,9 @@
           <span>02 / FOLLOW</span>
           <span>03 / OPEN</span>
         </div>
+        <div class="intro-loader-wordmark" aria-hidden="true"><span>ROLO</span><b>DEXI</b></div>
+        <span class="intro-loader-about" aria-hidden="true">ABOUT / YOUR PEOPLE ↗</span>
+        <span class="intro-pointer" aria-hidden="true">↖</span>
         <span class="intro-blue-corner" aria-hidden="true"></span>
         <div class="intro-loader-copy">
           <span>PEOPLE WORTH REMEMBERING</span>
@@ -52,6 +55,7 @@
       <header class="topbar">
         <div class="topbar-meta">
           <div class="eyebrow">PERSONAL CONTACT ARCHIVE · EST. 2026</div>
+          <button class="about-trigger" id="aboutBtn" type="button">About <span>↗</span></button>
         </div>
 
         <h1>Rolodexi <span class="title-note">personal edition</span></h1>
@@ -123,11 +127,50 @@
         </div>
       </section>
 
+      <section class="memory-film" aria-labelledby="memoryFilmHeading">
+        <div class="memory-film-intro">
+          <div class="eyebrow">A SHORT FILM FOR THE PEOPLE YOU MEET</div>
+          <div>
+            <h2 id="memoryFilmHeading">Keep the thread.</h2>
+            <p>Drop in a demo video later. The frame grows as you arrive, like a memory taking the room.</p>
+          </div>
+        </div>
+        <div class="memory-video-shell" id="memoryVideoShell">
+          <video id="memoryVideo" class="memory-video" controls muted loop playsinline preload="metadata" poster="roladexi.jpg" aria-label="Optional Rolodexi demo video">
+            <source src="demo-video.mp4" type="video/mp4" />
+          </video>
+          <div class="video-prompt" id="videoPrompt">
+            <span>DEMO FILM / V.01</span>
+            <strong>Place your video here.</strong>
+            <small>Drop <code>demo-video.mp4</code> beside <code>server.py</code> to replace this frame.</small>
+          </div>
+          <div class="memory-film-caption"><span>ROLL 01</span><span>THE ARCHIVE IN MOTION</span><span>SCROLL TO ENLARGE ↗</span></div>
+        </div>
+      </section>
+
       <p class="footer-note">
         A small place for the people worth remembering — where you met, what
         they care about, and the thread to pick up next time.
       </p>
     </main>
+
+    <dialog id="aboutDialog" class="about-dialog">
+      <div class="about-panel">
+        <div class="about-panel-top">
+          <span class="eyebrow">ROLODEXI / ABOUT</span>
+          <button class="about-close" id="aboutCloseBtn" type="button">Close ×</button>
+        </div>
+        <div class="about-panel-index">01 / PEOPLE WORTH REMEMBERING</div>
+        <h2>Rolodexi keeps the<br />thread between meetings.</h2>
+        <p>It stores the people you meet, where you met them, what matters to them, and the next detail worth remembering.</p>
+        <div class="about-principles">
+          <article><span>01</span><strong>Capture</strong><p>Type a quick memory instead of losing it.</p></article>
+          <article><span>02</span><strong>Organize</strong><p>AI turns one person’s scattered notes into one clear card.</p></article>
+          <article><span>03</span><strong>Return</strong><p>Find the person again when the next conversation arrives.</p></article>
+        </div>
+        <button class="about-return" id="aboutReturnBtn" type="button">Back to archive ↗</button>
+      </div>
+    </dialog>
 
     <dialog id="personDialog">
       <form class="modal" id="personForm">

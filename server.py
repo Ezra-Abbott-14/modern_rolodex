@@ -151,7 +151,8 @@ class RolodexHandler(BaseHTTPRequestHandler):
                   '/profile-api.mjs': ('profile-api.mjs', 'text/javascript; charset=utf-8'),
                   '/street_valley_characters.js': ('street_valley_characters.js', 'text/javascript; charset=utf-8'),
                   '/street_valley_world.js': ('street_valley_world.js', 'text/javascript; charset=utf-8'),
-                  '/roladexi.jpg': ('roladexi.jpg', 'image/jpeg')}
+                  '/roladexi.jpg': ('roladexi.jpg', 'image/jpeg'),
+                  '/demo-video.mp4': ('demo-video.mp4', 'video/mp4')}
         asset = assets.get(self.path.split('?', 1)[0])
         if not asset or not (ROOT / asset[0]).is_file():
             return self.send_json(404, {'error': 'Not found'})

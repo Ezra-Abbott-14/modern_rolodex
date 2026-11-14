@@ -4,6 +4,9 @@ iHack 2026: reinvent the physical rolodex for people who struggle to remember ne
 Type a short memory, let Gemini extract the details, review the results, and file a new card.
 The restrained editorial layout, dark deck, cream cards, and simple navigation keep the Rolodex practical and professional.
 Street Valley is a separate animated village below the card deck.
+The page also includes an editorial About panel and an expanding film frame below
+the village. To use your own demo clip, place a file named `demo-video.mp4` beside
+`server.py`; the Python server exposes it at `/demo-video.mp4`.
 
 ## Start locally
 
