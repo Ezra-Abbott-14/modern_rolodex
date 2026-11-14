@@ -208,3 +208,63 @@ device are pending that teammate. Do not claim remote deployment is complete.
 - No new Gemini key is needed per device once the shared service is deployed.
 - Data persistence remains browser-local; signing in does not connect RDS or share
   contacts between devices. Confirm database requirements in a separate task.
+
+## 2026-11-14 — ui_thinking — archive layout and color integration
+
+### Request and branch comparison
+
+- Use main's functional archive structure and ui_thinking's visual language and
+  animation. Current checkout was clean on ui_thinking at b41d638, a merge of main.
+- Remove the header's About/Why links, green ticker, and Remember/Why section;
+  make the logo R green; place All Cards/A–Z vertically with darker text; bring
+  the next card from below. Take a screenshot for the team's review afterward.
+- Main provides the functional controls, Gemini form, and village; ui_thinking
+  already contains the standalone R animation integrated into app startup.
+
+### Findings and changes
+
+- index.html: removed the requested navigation, ticker, explanatory section, and
+  unused About dialog. Added a dedicated green R span and vertical arrow labels.
+- light-theme.css: added one scoped final layout block instead of rewriting the
+  branch's many prototype layers. Vertical dark index, green selected letter,
+  centered vertical card stack, bottom-up Next and downward-return Previous,
+  visible Export/Update/Sign out actions, and compact responsive rules.
+- Removed pointer-follow transforms and obsolete About/Why handlers from app.js;
+  they targeted removed content or competed with the card transition. Kept the
+  opening R sequence, with its existing reduced-motion behavior.
+- app.js: Up/Down keys join Left/Right; swipes use Y coordinates; navigation at
+  either boundary does not play a misleading animation.
+- webapp.py and Dockerfile now include light-theme.css. The branch had added it
+  only inside obsolete nested server methods, so the real Flask app returned 404.
+- Browser integration exposed duplicate form filling in ui_thinking: its direct
+  pronouns assignment failed because that control is absent. Restored main's
+  single optional-field-safe populateProfileForm call. No provider changes.
+- test_server.py: existing public-assets integration test now covers the theme.
+- AGENTS.md and README.md record the new design, commands, interaction details,
+  verification procedure, and limitations. No secrets or stored contacts changed.
+
+### Verification and decisions
+
+- Passed: 25 Python unit/integration tests, 12 JavaScript tests, app.js syntax.
+- Browser observed the R opening and archiveRise transform with positive Y
+  translation while Next animates; letters share X and increase in Y; inactive
+  letters compute to rgb(41,41,37). Removed sections are absent from the DOM.
+- Scripted browser flow on the isolated localhost:8001 fixture: empty note shows
+  an instruction; unnamed person is rejected; Casey Morgan extraction fills name
+  and appearance; save twice keeps 11 existing fixture-origin cards; reload and
+  search returns one Casey card. Gemini is simulated only on this fixture port.
+- Browser checked Add/Cancel, Update/Cancel, empty Z, All Cards, Next/Previous.
+  Actual localhost:8000 serves the theme and keeps the existing 17 browser-local
+  cards (nine seed examples plus previously saved contacts).
+- Desktop review screenshot: test-results/ui-review.jpg (ignored generated file).
+- Not rechecked: live paid Gemini request, Docker build, AWS/public deployment.
+  Provider logic was unchanged; fixture exercises the full frontend/backend path.
+- Narrow-screen verification remains pending: the viewport capability accepted
+  390x844 but DOM width stayed 1280. Reset the override; do not claim mobile QA.
+
+### Open questions
+
+- Pending team review: do the screenshot's colors, vertical index spacing, and
+  upward card movement match the intended direction? The opening lasts 5.3s.
+- Pending team review: any further layout or motion adjustments before merging
+  this visual work to main? Work stays on ui_thinking for this review.

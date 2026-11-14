@@ -86,7 +86,7 @@ class HttpTests(unittest.TestCase):
             self.assertEqual(mocked.call_count, 2)
 
     def test_assets_and_secret_paths(self):
-        for path in ('/', '/app.js', '/styles.css', '/profile-api.mjs', '/street_valley_world.js', '/street_valley_characters.js'):
+        for path in ('/', '/app.js', '/styles.css', '/light-theme.css', '/profile-api.mjs', '/street_valley_world.js', '/street_valley_characters.js'):
             with self.client.get(path) as response:
                 self.assertEqual(response.status_code, 200)
         for path in ('/.env', '/.git/config', '/server.py', '/test_server.py', '/../.env', '/requirements.txt'):

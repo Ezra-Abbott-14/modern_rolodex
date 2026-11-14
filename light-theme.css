@@ -2410,3 +2410,110 @@ body {
     transform:none;
   }
 }
+
+/* Main's usable archive layout, with ui_thinking's cream/ink/acid palette.
+   Keep these scoped rules last so older prototype layouts cannot hide controls. */
+body.ma-ui .topbar { grid-template-columns:minmax(0,1fr) auto; gap:16px; }
+body.ma-ui .global-brand .brand-initial { color:var(--ma-acid); }
+body.ma-ui .editorial-hero-wordmark { top:30px; }
+body.ma-ui .top-actions { grid-column:2; grid-row:1; width:auto; flex-wrap:wrap; }
+body.ma-ui .top-actions .ghost:not([hidden]) {
+  display:inline-flex;
+  align-items:center;
+  background:transparent;
+  border:1px solid #e9e8e260;
+  box-shadow:none;
+  color:var(--ma-paper);
+  font-size:10px;
+}
+body.ma-ui .top-actions .ghost:hover { background:#e9e8e218; }
+body.ma-ui .rolodex {
+  display:grid;
+  grid-template-columns:88px minmax(0,1fr);
+  align-items:start;
+  gap:32px;
+  min-height:0;
+  padding:32px 7vw 64px;
+}
+body.ma-ui .index-panel {
+  display:block;
+  min-width:0;
+  padding:0 12px 0 0;
+  border:0;
+  border-right:1px solid var(--ma-line);
+}
+body.ma-ui .index-panel .index {
+  display:flex;
+  flex-direction:column;
+  gap:1px;
+  padding:0;
+  overflow:visible;
+  max-height:none;
+}
+body.ma-ui .index-panel .tab {
+  flex:none;
+  width:100%;
+  min-width:0;
+  min-height:25px;
+  padding:6px 4px;
+  color:#292925;
+  font-weight:700;
+  border-radius:4px;
+}
+body.ma-ui .index-panel .tab.active,
+body.ma-ui .index-panel .tab:hover { background:var(--ma-acid); color:#171714; box-shadow:none; }
+body.ma-ui .index-panel .tab:focus-visible { outline:2px solid var(--ma-ink); outline-offset:2px; }
+body.ma-ui .machine { min-width:0; min-height:0; margin:0; border:0; }
+body.ma-ui .machine-top { flex-wrap:wrap; gap:12px; }
+body.ma-ui .machine-brand { text-shadow:none; }
+body.ma-ui .search { flex:1; min-width:150px; }
+body.ma-ui .search input { width:100%; min-width:0; background:transparent; border:0; box-shadow:none; }
+body.ma-ui .deck-window { min-height:590px; margin-top:24px; touch-action:pan-x; }
+body.ma-ui .card-stack { width:94%; height:520px; }
+body.ma-ui .contact-card { padding:40px 38px 34px 48px; transform-origin:50% 100%; }
+body.ma-ui .contact-card.front { transform:none; }
+body.ma-ui .contact-card.front:hover { transform:translateY(-3px); }
+body.ma-ui .contact-card.behind-1 { transform:translateY(16px) scale(.97); }
+body.ma-ui .contact-card.behind-2 { transform:translateY(30px) scale(.94); }
+body.ma-ui .contact-card.behind-3 { transform:translateY(42px) scale(.91); }
+body.ma-ui .card-stack.flip-next .contact-card.front { animation:archiveRise .6s cubic-bezier(.2,.8,.2,1) both; }
+body.ma-ui .card-stack.flip-prev .contact-card.front { animation:archiveReturn .6s cubic-bezier(.2,.8,.2,1) both; }
+body.ma-ui .street-valley-world { margin-top:0; }
+@keyframes archiveRise {
+  from { transform:translateY(80%) rotateX(-14deg); opacity:0; }
+  to { transform:translateY(0) rotateX(0); opacity:1; }
+}
+@keyframes archiveReturn {
+  from { transform:translateY(-40%) rotateX(10deg); opacity:0; }
+  to { transform:translateY(0) rotateX(0); opacity:1; }
+}
+@media (max-width:700px) {
+  body.ma-ui .topbar { grid-template-columns:1fr; top:12px; border-radius:24px; gap:12px; }
+  body.ma-ui .top-actions { grid-column:1; grid-row:2; justify-content:flex-start; }
+  body.ma-ui .top-actions #exportBtn,
+  body.ma-ui .top-actions #updateBtn { display:inline-flex; }
+  body.ma-ui .app { padding-top:150px; }
+  body.ma-ui .editorial-hero { --editorial-top:150px; }
+  body.ma-ui .editorial-hero.editorial-hero-mark-only { min-height:70px; }
+  body.ma-ui .editorial-hero-wordmark { top:30px; }
+  body.ma-ui .rolodex { grid-template-columns:54px minmax(0,1fr); gap:12px; padding:24px 12px 40px; }
+  body.ma-ui .index-panel { padding-right:6px; }
+  body.ma-ui .index-panel .tab { min-height:27px; font-size:10px; }
+  body.ma-ui .machine { padding:0; }
+  body.ma-ui .machine-brand { font-size:19px; }
+  body.ma-ui .deck-window { min-height:590px; border-radius:16px; box-shadow:6px 8px 0 #17171414; }
+  body.ma-ui .contact-card { padding:32px 20px 28px 28px; border-radius:14px; }
+  body.ma-ui .contact-card h2 { font-size:28px; }
+  body.ma-ui .contact-card:before { left:12px; }
+  body.ma-ui .contact-card:after { inset:8px; }
+  body.ma-ui .card-header { flex-wrap:wrap; gap:12px; }
+  body.ma-ui .card-fields { grid-template-columns:1fr; }
+  body.ma-ui .deck-controls { flex-wrap:wrap; gap:10px; }
+  body.ma-ui .flip { padding:12px 10px; font-size:9px; }
+  body.ma-ui .deck-position { order:3; width:100%; text-align:center; }
+}
+@media (prefers-reduced-motion:reduce) {
+  body.ma-ui .card-stack.flip-next .contact-card.front,
+  body.ma-ui .card-stack.flip-prev .contact-card.front { animation:none; }
+  body.ma-ui .contact-card { transition:none; }
+}

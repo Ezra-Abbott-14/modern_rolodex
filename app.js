@@ -369,15 +369,15 @@ function render() {
 function moveDeck(amount) {
   if (!visiblePeople.length) return;
 
+  const nextIndex = Math.max(0, Math.min(deckIndex + amount, visiblePeople.length - 1));
+  if (nextIndex === deckIndex) return;
+
   const stack = $('#cardStack');
   const flipClass = amount > 0 ? 'flip-next' : 'flip-prev';
   stack.classList.remove('flip-next', 'flip-prev');
   void stack.offsetWidth;
   stack.classList.add(flipClass);
-  deckIndex = Math.max(0, Math.min(
-    deckIndex + amount,
-    visiblePeople.length - 1
-  ));
+  deckIndex = nextIndex;
   renderDeck();
   window.setTimeout(() => stack.classList.remove(flipClass), 620);
 }
@@ -441,18 +441,20 @@ $('#deckWindow').addEventListener('wheel', event => {
 
 document.addEventListener('keydown', event => {
   if ($('#personDialog').open || $('#updateDialog').open || /INPUT|TEXTAREA|SELECT/.test(event.target.tagName)) return;
-  if (event.key === 'ArrowRight') moveDeck(1);
-  if (event.key === 'ArrowLeft') moveDeck(-1);
+  if (['ArrowRight', 'ArrowDown', 'ArrowLeft', 'ArrowUp'].includes(event.key)) {
+    event.preventDefault();
+    moveDeck(['ArrowRight', 'ArrowDown'].includes(event.key) ? 1 : -1);
+  }
 });
 
 $('#deckWindow').addEventListener('pointerdown', event => {
-  dragStart = event.clientX;
+  dragStart = event.clientY;
 });
 
 $('#deckWindow').addEventListener('pointerup', event => {
   if (dragStart === null) return;
 
-  const distance = event.clientX - dragStart;
+  const distance = event.clientY - dragStart;
   if (Math.abs(distance) > 45) moveDeck(distance < 0 ? 1 : -1);
   dragStart = null;
 });
@@ -517,12 +519,6 @@ $('#generateBtn').onclick = async () => {
   setCaptureStatus('Organizing your note…');
   try {
     const profile = await extractProfile(note);
-    for (const name of ['name', 'role', 'met', 'city', 'phone', 'email', 'notes', 'gender', 'pronouns', 'appearance']) {
-      $('#personForm').elements.namedItem(name).value = profile[name] || '';
-    }
-    $('#personForm').elements.namedItem('events').value = (profile.events || []).join('\n');
-    $('#personForm').elements.namedItem('tags').value = (profile.tags || []).join(', ');
-    setCaptureStatus('Details organized. Review them below, then save your card.');
     populateProfileForm($('#personForm'), profile);
     setCaptureStatus('Details extracted with Gemini. Review them below, then save your card.');
   } catch (error) {
@@ -607,75 +603,6 @@ $('#updateForm').onsubmit = event => {
   deckIndex = sortByLastName(people).findIndex(item => item.id === person.id);
   render();
 };
-
-const aboutDialog = $('#aboutDialog');
-$('#aboutBtn').onclick = () => aboutDialog.showModal();
-$('#aboutCloseBtn').onclick = () => aboutDialog.close();
-$('#aboutReturnBtn').onclick = () => aboutDialog.close();
-aboutDialog.addEventListener('click', event => {
-  if (event.target === aboutDialog) aboutDialog.close();
-});
-
-const whyCopy = $('[data-why-copy]');
-const whyTitle = $('[data-why-title]');
-const whyDetail = $('[data-why-detail]');
-const whyTabs = document.querySelectorAll('[data-why-tab]');
-const whyContent = {
-  remember: {
-    copy: 'Rolodexi reinvents the old card file as a quiet place to save the small detail you want to remember next time.',
-    title: 'One person.<br />One living card.',
-    detail: 'Where you met.<br />What to pick up.'
-  },
-  organize: {
-    copy: 'We built Rolodexi to turn scattered contact notes into an accessible, self-writing archive that can keep growing with you.',
-    title: 'Why we did<br />that.',
-    detail: 'Searchable database.<br />Available on the web.<br />Self-writing card.<br />Replicable with JSON.'
-  }
-};
-
-whyTabs.forEach(tab => {
-  tab.onclick = () => {
-    const content = whyContent[tab.dataset.whyTab];
-    if (!content) return;
-    whyTabs.forEach(item => {
-      const active = item === tab;
-      item.classList.toggle('is-active', active);
-      item.setAttribute('aria-selected', String(active));
-    });
-    whyCopy.innerHTML = `${content.copy}`;
-    whyTitle.innerHTML = content.title;
-    whyDetail.innerHTML = content.detail;
-  };
-});
-
-// Keep the ma prototype's movable-block interaction: the archive cards and
-// editorial bento cards gently follow the pointer, then settle back in place.
-const movableGroups = [
-  { parent: '.machine', items: '.contact-card', strength: 12 },
-  { parent: '.why-bento', items: '.why-bento-card', strength: 18 }
-];
-
-movableGroups.forEach(({ parent, items, strength }) => {
-  const area = document.querySelector(parent);
-  if (!area) return;
-  area.addEventListener('pointermove', event => {
-    const rect = area.getBoundingClientRect();
-    const x = (event.clientX - rect.left) / rect.width - .5;
-    const y = (event.clientY - rect.top) / rect.height - .5;
-    [...area.querySelectorAll(items)].forEach((block, index) => {
-      const depth = Math.min(strength, 7) * (1 + index * .08);
-      const tilt = x * (index % 2 ? -.45 : .45);
-      block.classList.add('is-moving');
-      block.style.transform = `translate3d(${x * depth}px, ${y * depth}px, 0) rotate(${tilt}deg)`;
-    });
-  });
-  area.addEventListener('pointerleave', () => {
-    [...area.querySelectorAll(items)].forEach(block => {
-      block.classList.remove('is-moving');
-      block.style.transform = '';
-    });
-  });
-});
 
 render();
 

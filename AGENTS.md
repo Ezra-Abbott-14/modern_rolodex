@@ -6,7 +6,7 @@
 - Two-minute demo: introduce the traditional rolodex, enter a memory, extract/review/save a card, find it again, and show its Street Valley connection.
 - Fields: name, explicitly stated gender/pronouns, meeting place, memorable events, and described appearance; never invent missing details.
 - Deadline: November 14, 2026, 4 p.m. America/Denver (Rexburg, Idaho).
-- Preserve main's current retro stacked-card design, blue-purple styling, alphabet navigation, and Street Valley; retain the nine example cards and saved contacts.
+- Design: main's working card archive with ui_thinking's cream/ink/acid-green palette and R opening animation; vertical dark alphabet index, bottom-up next-card motion, no About/Why links, ticker, or Remember/Why section. Retain nine seed cards, saved contacts, and Street Valley.
 - Team knows JavaScript, HTML, CSS, Python, C, C++, C#; explain each implementation step before prioritizing speed.
 - Provider: Gemini; Flask/Waitress backend. Key remains server-side. AWS teammate is preparing hosting/RDS; provisioning and public HTTPS verification are explicitly deferred.
 

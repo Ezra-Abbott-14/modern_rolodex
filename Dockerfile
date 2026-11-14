@@ -3,7 +3,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 APP_ENV=production HOST=0.0.0.0
 WORKDIR /app
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt && useradd --uid 10001 --create-home appuser
-COPY server.py webapp.py index.html styles.css app.js profile-api.mjs street_valley_world.js street_valley_characters.js roladexi.jpg ./
+COPY server.py webapp.py index.html styles.css light-theme.css app.js profile-api.mjs street_valley_world.js street_valley_characters.js roladexi.jpg ./
 COPY templates ./templates
 USER appuser
 EXPOSE 8000
