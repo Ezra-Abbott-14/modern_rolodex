@@ -607,14 +607,9 @@ const whyContent = {
     detail: 'Where you met.<br />What to pick up.'
   },
   organize: {
-    copy: 'A typed memory becomes one clear profile, so Maya and Maya Chen stay distinct while every Maya note stays together.',
-    title: 'Scattered notes.<br />One thread.',
-    detail: 'AI organizes.<br />You stay in control.'
-  },
-  return: {
-    copy: 'Search by name, place, or the detail you remember, then return to the conversation with something real to say.',
-    title: 'Find the thread.<br />Pick it up again.',
-    detail: 'Search the archive.<br />Make it personal.'
+    copy: 'We built Rolodexi to turn scattered contact notes into an accessible, self-writing archive that can keep growing with you.',
+    title: 'Why we did<br />that.',
+    detail: 'Searchable database.<br />Available on the web.<br />Self-writing card.<br />Replicable with JSON.'
   }
 };
 
